@@ -170,6 +170,7 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
     startChannelHeader = len(header)
     for i in range(0, numChannels):        ## Repeat this next line N (NumChannels) times
         header += pack("L", 0)        # Int       Offset for length of channel i
+
     header += pack("L", 0)        # Int       Special and unused line
 
     # For each of the channels, build the channel header
@@ -237,10 +238,16 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
         ch += pack("B", 0)  # ScaleType As Byte              '0=Engineering units, 1=Electrical
         ch += pack("f", 0)  # SoftwareTareVal As Single   'Software tare (zero) for channels carrying a user scale
         ch += pack("B", 0)  # WriteProtected As Byte       ' If true, write access is denied
-        ch += pack("f", 0)  # NominalRange As Single      'CAV value
-        ch += pack("f", 0)  # CLCFactor As Single           'Cable length compensation factor (CANHEAD only)
+        #ch += pack("f", 0)  # NominalRange As Single      'CAV value
+        #ch += pack("f", 0)  # CLCFactor As Single           'Cable length compensation factor (CANHEAD only)
+        ch += pack("B", 0)  # Pad
         ch += pack("B", exportFormat)  # ExportFormat As Byte          '0=8-Byte Double, 1=4-Byte Single, 2=2-Byte Integer  FOR CATMAN BINARY EXPORT ONLY!
         #ch += pack("10s", "".encode("UTF-8"))  # Reserve As String * 10
+
+        ch += pack("f", 0)  # 4 Bytes packed
+        ch += pack("B", 0)  # Pack 3 more bytes
+        ch += pack("B", 0)
+        ch += pack("B", 0)
 
         ch += pack("B", 0)  #    # 1 Byte    LIN_MODE = Linearisation mode (0=none,1=Extern Hardware, 2=user scale, 3=Thermo J,.....) (new since 5009 = catman 3.1)
         ch += pack("B", 0)  #    # 1 Byte    User scale type (0=Linearisation table, 1=Polynom, 2=f(x), 3=DMS Skalierung) (new since 5009 = catman 3.1)
@@ -251,11 +258,11 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
         ch += pack("H", 0)  #    # Short     String length of formula f(x)  = L (new since 5009 = catman 3.1)
         #ch += pack("s", 0)  #    # L bytes   Formula f(x)  (if L > 0 ) (new since 5009 = catman 3.1)
 
-        ch += pack("L", 70)   # Int       K = Size of struct DBSensorInfo (new since 5012 catman 5.0)  DBSensorInfo   Sensor type description and TID  (new since 5012 catman 5.0)
+        ch += pack("L", 68)   # Int       K = Size of struct DBSensorInfo (new since 5012 catman 5.0)  DBSensorInfo   Sensor type description and TID  (new since 5012 catman 5.0)
         # K Bytes   Continguious block for the Sensor Info setup,
         ch += pack("L", 0)     # InUse As Integer
         ch += pack("50s", "[description]".encode("UTF-8"))    # Description As String * 50
-        ch += pack("16s", str(chanDevId).encode("UTF-8"))   # TID As String * 16
+        ch += pack("14s", str(chanDevId).encode("UTF-8"))   # TID As String * 16
 
         # Append this channel header to all the channel headers
         print('Channel', i, 'has header of size', len(ch))
@@ -266,12 +273,20 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
     fullheaderLength = len(header) + len(channelHeaders)
     header[2:6] = pack("L", fullheaderLength)
 
+    print("Header is ", len(header))
+    print(chanOffset)
+
+    lastOffset = len(header) + 2
     # Update the reference to the channel header in the header
     for i in range(numChannels):
-        if (i > 1):
-            header[startChannelHeader + 4 * i: startChannelHeader + 4 * (i + 1)] = pack("L", len(header) + chanOffset[i-1])  # Int       Offset for length of channel i
+        print('Chan offset', i, chanOffset[i])
+        if i >= 1:
+            lastOffset += chanOffset[i-1]
+            print("Packing", lastOffset)
+            header[startChannelHeader + 4 * i : startChannelHeader + 4 * (i + 1)] = pack("L", lastOffset)  # Int       Offset for length of channel i
         else:
-            header[startChannelHeader + 4*i : startChannelHeader+ 4 * (i+1)] = pack("L", len(header))  # Int       Offset for length of channel i
+            print("Packing first", lastOffset)
+            header[startChannelHeader + 4 * i : startChannelHeader + 4 * (i + 1)] = pack("L", lastOffset)  # Int       Offset for length of channel i
 
     return (header, channelHeaders)
 
