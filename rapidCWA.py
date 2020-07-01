@@ -4,41 +4,47 @@
 
 import numpy as np
 from numpy.lib import recfunctions as rfn
-
+from datetime import datetime
 
 # Layout
 # 1) Load file
 # 2) File is read into memory
 # 3) File is operated on, converted to numpy array, and original is destroyed.
 
+def method2(filePath):
+    # Requires 2x the file size as memory size
+    pass
+
 def method1(filePath):
 
-    # ndarray setup
+    # Output startint time
+    current_time = datetime.now().strftime("%H:%M:%S.%f")
+    print("Start time =", current_time)
+
+    # ndarray setup - the numpy array dimensions and cols
     cols = ['x', 'y', 'z']
-    types = ['i2'] * len(cols)
-    typesOutput = ['f8'] * len(cols)
+    types = ['i2'] * len(cols)  # The 2byte integer layout
+    #  typesOutput = ['f8'] * len(cols)
     layout = np.dtype({'names': cols, 'formats': types})
-    layoutOutput = np.dtype({'names': cols, 'formats': types})
+    #  layoutOutput = np.dtype({'names': cols, 'formats': types})
 
     # Load file directly to ram
     fp = open(filePath, "rb")
     memmap = memoryview(fp.read())
     fp.close()
 
-    print(len(memmap))
+    fileSize = len(memmap)
+    print("File size", fileSize)
 
     headerOffset = 1024
     sectorSize = 512
-
-    sectors = (len(memmap) - headerOffset) // sectorSize
-
     samplesPerSector = 80
 
+    sectors = (fileSize - headerOffset) // sectorSize
     samples = sectors * samplesPerSector
-    print(samples)
+    print("Samples=",samples)
 
-    op = 10
-
+    op = 1 #  Number of times to BRUTE force -> simulate a massive file
     masterArray = np.zeros((samples*op, ), dtype=layout)
 
     for i in range(sectors*op):
@@ -58,6 +64,8 @@ def method1(filePath):
 
     f.close()
 
+    current_time = datetime.now().strftime("%H:%M:%S.%f")
+    print("End time =", current_time)
 
     #print(len(imp))
 
