@@ -237,8 +237,8 @@ class PrefForm():
         (startTime, endTime, numSamples) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample,
                                                                              resampleFreq=resampleFreq, multithread=self.multithread,
                                                                              nThreads=numThreads, demoRun=True, trimStart=trimStart, trimEnd=trimEnd)
-        start = CWA.timestamp_string(startTime)
-        end = CWA.timestamp_string(endTime)
+        start = CWA.timezone_timestamp_string(startTime)
+        end = CWA.timezone_timestamp_string(endTime)
 
         output = "Start Time:     " + start + "\nFinish Time:   " + end + "\nSamples:        " + str(numSamples)
         self.trimText.config(text=output)

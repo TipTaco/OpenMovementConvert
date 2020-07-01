@@ -4,7 +4,7 @@
 import sys
 from struct import *
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import json
 
@@ -50,6 +50,15 @@ def timestamp_string(timestamp):
     if timestamp < 0:
         return "-1"
     # return str(datetime.fromtimestamp(timestamp))
+    return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S.%f")[:23]
+
+def timezone_timestamp_string(timestamp):
+    if timestamp == 0:
+        return "0"
+    if timestamp < 0:
+        return "-1"
+    # return str(datetime.fromtimestamp(timestamp))
+    timestamp = timestamp - 8*60*60
     return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S.%f")[:23]
 
 
@@ -277,14 +286,17 @@ def cwa_data(block, extractData=False):
                 data['accelAxis'] = accelAxis
                 data['accelRange'] = accelRange
                 data['accelUnit'] = accelUnit
+                data['accelScale'] = accelScale
             if gyroAxis >= 0:
                 data['gyroAxis'] = gyroAxis
                 data['gyroRange'] = gyroRange
                 data['gyroUnit'] = gyroUnit
+                data['gyroScale'] = gyroUnit
             if magAxis >= 0:
                 data['magAxis'] = magAxis
                 data['magRange'] = magRange
                 data['magUnit'] = magUnit
+                data['magScale'] = magUnit
 
             if extractData:
                 if accelAxis >= 0:

@@ -136,19 +136,27 @@ def pack_string(string):
     return outbytes
 
 # A function to take the data block created by the CWA convert and write the equivelant to a .BIN file
-def generate_BIN(testName, testComment, channelInfos):
+def generate_BIN(testName, testComment, channelInfos, dataWidth):
     header = bytearray()
 
     # The number of channels as per the first block
     numChannels = len(channelInfos)
     units = "g"
 
+    exportFormat = 0
+    if dataWidth == 4:
+        exportFormat = 1
+    elif dataWidth == 2:
+        exportFormat = 2
+
+    print("Export format =", exportFormat)
+
     # Internal head offset
     startChannelHeader = 0
 
     # - - Begin Header Block - - #
     header += pack("H", int(5012))                # Short     FileID = the version of this catman file
-    header += pack("L", 934)                # Int       Data_offset = the number of bytes until the Data block starts
+    header += pack("L", 4096)                # Int       Data_offset = the number of bytes until the Data block starts
 
     header += pack_string(testComment)        # Short     L = Comment length in bytes
     # L bytes   Comment
@@ -231,7 +239,7 @@ def generate_BIN(testName, testComment, channelInfos):
         ch += pack("B", 0)  # WriteProtected As Byte       ' If true, write access is denied
         ch += pack("f", 0)  # NominalRange As Single      'CAV value
         ch += pack("f", 0)  # CLCFactor As Single           'Cable length compensation factor (CANHEAD only)
-        ch += pack("B", 0)  # ExportFormat As Byte          '0=8-Byte Double, 1=4-Byte Single, 2=2-Byte Integer  FOR CATMAN BINARY EXPORT ONLY!
+        ch += pack("B", exportFormat)  # ExportFormat As Byte          '0=8-Byte Double, 1=4-Byte Single, 2=2-Byte Integer  FOR CATMAN BINARY EXPORT ONLY!
         #ch += pack("10s", "".encode("UTF-8"))  # Reserve As String * 10
 
         ch += pack("B", 0)  #    # 1 Byte    LIN_MODE = Linearisation mode (0=none,1=Extern Hardware, 2=user scale, 3=Thermo J,.....) (new since 5009 = catman 3.1)
@@ -267,10 +275,18 @@ def generate_BIN(testName, testComment, channelInfos):
 
     return (header, channelHeaders)
 
-# A function to take the data block created by the CWA convert and write the equivelant to a .BIN file
+# A function to take the data block created by the CWA convert and write the equivalent to a .BIN file
 def bin_write_header(data):
     header = bytearray()
     print(data['file']['name'])
+
+    dataWidth = 4
+
+    exportFormat = 0
+    if dataWidth == 4:
+        exportFormat = 1
+    elif dataWidth == 2:
+        exportFormat = 2;
 
     # The number of channels as per the first block
     numChannels = int(data['first']['channels'])
@@ -337,7 +353,7 @@ def bin_write_header(data):
         ch += pack_string(chanName)   # Short     String Channel Comment length in bytes
         # L bytes   Channel comment
         ch += pack("H", 0)    # Short     Format of channel eg 0 = numeric 1 = string  2 = binary object     (new since 5007)
-        ch += pack("H", 8)    # Short     Data width in Bytes  (for numeric format always = 8  for string >= 8)  (new since 5007)
+        ch += pack("H", dataWidth)    # Short     Data width in Bytes  (for numeric format always = 8  for string >= 8)  (new since 5007)
         ch += pack("d", startTime)    # Double    (8 bytes) Date and time of measurement in NOW format (since 5010)
         ch += pack("L", 148)    # Int       Size of the extended channel header in bytes
         print('Starting length', len(ch))
@@ -370,7 +386,7 @@ def bin_write_header(data):
         ch += pack("B", 0)  # WriteProtected As Byte       ' If true, write access is denied
         ch += pack("f", 0)  # NominalRange As Single      'CAV value
         ch += pack("f", 0)  # CLCFactor As Single           'Cable length compensation factor (CANHEAD only)
-        ch += pack("B", 0)  # ExportFormat As Byte          '0=8-Byte Double, 1=4-Byte Single, 2=2-Byte Integer  FOR CATMAN BINARY EXPORT ONLY!
+        ch += pack("B", exportFormat)  # ExportFormat As Byte          '0=8-Byte Double, 1=4-Byte Single, 2=2-Byte Integer  FOR CATMAN BINARY EXPORT ONLY!
         #ch += pack("10s", "".encode("UTF-8"))  # Reserve As String * 10
         print('ending len', len(ch))
 

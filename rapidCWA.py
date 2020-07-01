@@ -34,7 +34,7 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
     masterArray = np.zeros((samples, ), dtype=layout)
 
     for i in range(sectors):
-        if i % (sectors // 10) == 0:
+        if i % (sectors // 4) == 0:
             print("Read ", round(100.0 * i / sectors, 1), "% complete")
 
         imp = np.frombuffer(memmap[headerOffset + i * sectorSize : headerOffset + (i+1) * sectorSize - 2], offset=30, dtype=layout)
@@ -46,7 +46,20 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
     print("Read Complete.(", current_time, ")")
     return masterArray
 
-def writeToFile(arrayIn, filePath, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
+def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
+
+    first = loggerInfo['first']
+    numChannels = first['channels']
+
+    scaleFactors = []
+    if numChannels >= 6:
+        scaleFactors.append(first['gyroScale'])
+        scaleFactors.append(first['accelScale'])
+        if numChannels >= 9:
+            scaleFactors.append(first['magScale'])
+    elif numChannels >= 3:
+        scaleFactors.append(first['accelScale'])
+
 
     current_time = datetime.now().strftime("%H:%M:%S")
     print("Channel Writing start (", current_time, ")")
@@ -55,7 +68,6 @@ def writeToFile(arrayIn, filePath, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', '
         filePath += ".bin"
 
     fp = open(filePath, 'ab+')
-    numChannels = len(cols)
 
     type = 'float64'
     if (sizeBytes == 4):
@@ -69,8 +81,9 @@ def writeToFile(arrayIn, filePath, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', '
     # print(arrayIn[cols[0]].astype(type).itemsize)
 
     for i in range(numChannels):
+        iScale = scaleFactors[i//3]  # First three channels take scaleFactor[0], 4-6 take scaleFactor[1] etc
+        fp.write((arrayIn[cols[i]]/ iScale).astype(type).tobytes())
         print("Logger Channel", cols[i], "written")
-        fp.write((arrayIn[cols[i]].astype(type) / 2048.0).tobytes())
 
     fp.close()
 

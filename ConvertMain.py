@@ -14,7 +14,7 @@ from struct import *
 import tkinter as tk
 from tkinter import filedialog
 
-import numpy as np
+import time
 
 from multiprocessing import Pool
 from multiprocessing import freeze_support
@@ -30,6 +30,7 @@ NUM_THREADS: int = 4
 MULTITHREAD: bool = True
 RESAMPLE: bool = True
 RESAMPLE_FREQ: float = 800.0
+OUTPUT_DATA_WIDTH: int = 8
 
 def main():
     """ Main function decl. This will be the position in file that is run to start with.
@@ -86,7 +87,7 @@ def save_file_name():
     return file
 
 def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ, multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0, demoRun = False):
-    """ Operates a many
+    """ Operates on many
     Each physical logger has three accelerometer axis and as such will command THREE channels
     """
     # Order the logger files in numerical Order
@@ -150,7 +151,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     if channels['max'] == 6: axis = ["Ax", "Ay", "Az", "Gx", "Gy", "Gz"]
     if channels['max'] == 9: axis = ["Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz"]
 
-    loggerOffsets: int = []
+    loggerOffsets = []
     loggerOffsets.append(0)
 
     for logger in loggers:
@@ -176,7 +177,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
             channel_list.append(channel_object)
 
         # When writing out the data file, need to know exact position of data (either scaled or not)
-        loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * 8)
+        loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * OUTPUT_DATA_WIDTH)
         #print("last offset", loggerOffsets[-1])
 
     # Manipulate file paths
@@ -188,7 +189,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     if (resample):
         comment += "on at " + str(resampleFreq) + "Hz"
     else: comment += "off."
-    (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list)
+    (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, OUTPUT_DATA_WIDTH)
 
     print("Saving output file to", dirname + "/")
 
@@ -203,11 +204,18 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
 
     # Multithreading disabled for now - Dropping in rapidCWA methods
 
+    startTime = time.time()
+
     for i, logger in enumerate(loggers):
         fp = logger['filePath']
-        masterArray = rCWA.readToMem(fp, logger, cols=axis)
+        print("")  # Blank Display Line
+        masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
+        # TODO add in resampling here
         offset = lastFilePos + loggerOffsets[i]
-        rCWA.writeToFile(masterArray, filePath=outputPath, offsetBytes=offset, sizeBytes=8, cols=axis)
+        rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=offset, sizeBytes=OUTPUT_DATA_WIDTH, cols=axis)
+
+    deltaT = time.time() - startTime
+    print("\n Completed in", round(deltaT, 2), "s")
 
     """
     # Make a processing pool
