@@ -268,7 +268,7 @@ def cwa_data(block, extractData=False):
             accelRange = 16
             if rateCode != 0:
                 accelRange = 16 >> (rateCode >> 6)
-            # magRange = 32768 / magUnit
+            magRange = 32768 / magUnit
 
             # Unit
             gyroUnit = 32768.0 / gyroRange

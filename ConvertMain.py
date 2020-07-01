@@ -1,9 +1,10 @@
 # Test environment to confirm the working status of the file converter for converting files.
 # Author: Adrian Shedley with external code used from the open source OMGUI github for AX3
 # Date Created: 20 May 2020
-# Last Modified 26 may 2020
+# Last Modified 1 July 2020 - Modifications to speed up conversion by 40x
 
 import cwa_metadata as CWA   # cwa file type converter
+import rapidCWA as rCWA  # Rapid cwa file loader
 import bin_data as BIN  # bin file type converter
 
 import os
@@ -12,6 +13,8 @@ from struct import *
 
 import tkinter as tk
 from tkinter import filedialog
+
+import numpy as np
 
 from multiprocessing import Pool
 from multiprocessing import freeze_support
@@ -34,8 +37,6 @@ def main():
         First a selection of openMovement .cwa files are selcted by the user,
         Then an output file name (.tst) is specified.
         The channels are then computed and concatenated. """
-
-
 
     # get the user to specify at least one .cwa file
     cwaInputPaths = open_multiple_files()
@@ -200,6 +201,15 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     f.flush()
     f.close()
 
+    # Multithreading disabled for now - Dropping in rapidCWA methods
+
+    for i, logger in enumerate(loggers):
+        fp = logger['filePath']
+        masterArray = rCWA.readToMem(fp, logger, cols=axis)
+        offset = lastFilePos + loggerOffsets[i]
+        rCWA.writeToFile(masterArray, filePath=outputPath, offsetBytes=offset, sizeBytes=8, cols=axis)
+
+    """
     # Make a processing pool
     pool = None
     if (multithread == True):
@@ -230,6 +240,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
 
     if (multithread == True):
         pool.close()
+    """
 
     if (resample):
         write_tst_resampled(dirname + "/" + base, channel_list)

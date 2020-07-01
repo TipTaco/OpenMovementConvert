@@ -11,9 +11,72 @@ from datetime import datetime
 # 2) File is read into memory
 # 3) File is operated on, converted to numpy array, and original is destroyed.
 
-def method2(filePath):
-    # Requires 2x the file size as memory size
-    pass
+def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
+    """ Reads all the data from a logger and returns a numpy array object"""
+    current_time = datetime.now().strftime("%H:%M:%S")
+    print("Reading ", filePath, "(", current_time, ")")
+
+    headerOffset = 1024
+    sectorSize = 512
+    samplesPerSector = loggerInfo['first']['samplesPerSector']
+
+    types = ['i2'] * len(cols)  # The 2byte integer layout
+    layout = np.dtype({'names': cols, 'formats': types})  # Name the columns of the array
+
+    fp = open(filePath, "rb")  # Open the file in read bytes mode
+    memmap = memoryview(fp.read())
+    fp.close()
+
+    fileSize = len(memmap)
+    sectors = (fileSize - headerOffset) // sectorSize
+    samples = sectors * samplesPerSector
+
+    masterArray = np.zeros((samples, ), dtype=layout)
+
+    for i in range(sectors):
+        if i % (sectors // 10) == 0:
+            print("Read ", round(100.0 * i / sectors, 1), "% complete")
+
+        imp = np.frombuffer(memmap[headerOffset + i * sectorSize : headerOffset + (i+1) * sectorSize - 2], offset=30, dtype=layout)
+        masterArray[i * samplesPerSector : (i+1) * samplesPerSector] = imp
+
+    memmap.release()
+
+    current_time = datetime.now().strftime("%H:%M:%S")
+    print("Read Complete.(", current_time, ")")
+    return masterArray
+
+def writeToFile(arrayIn, filePath, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
+
+    current_time = datetime.now().strftime("%H:%M:%S")
+    print("Channel Writing start (", current_time, ")")
+
+    if not filePath.endswith(".bin"):
+        filePath += ".bin"
+
+    fp = open(filePath, 'ab+')
+    numChannels = len(cols)
+
+    type = 'float64'
+    if (sizeBytes == 4):
+        type = 'float32'
+    elif (sizeBytes == 2):
+        type = 'float16'
+
+    fp.seek(offsetBytes)
+
+    # print(len(arrayIn[cols[0]]))
+    # print(arrayIn[cols[0]].astype(type).itemsize)
+
+    for i in range(numChannels):
+        print("Logger Channel", cols[i], "written")
+        fp.write((arrayIn[cols[i]].astype(type) / 2048.0).tobytes())
+
+    fp.close()
+
+    current_time = datetime.now().strftime("%H:%M:%S")
+    print("Writing complete. (", current_time, ")")
+
 
 def method1(filePath):
 
