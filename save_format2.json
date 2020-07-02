@@ -1,0 +1,93 @@
+{
+ "version": "auto-py-to-exe-configuration_v1",
+ "pyinstallerOptions": [
+  {
+   "optionDest": "noconfirm",
+   "value": true
+  },
+  {
+   "optionDest": "filenames",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/GUI_Start.py"
+  },
+  {
+   "optionDest": "onefile",
+   "value": true
+  },
+  {
+   "optionDest": "console",
+   "value": true
+  },
+  {
+   "optionDest": "ascii",
+   "value": false
+  },
+  {
+   "optionDest": "clean_build",
+   "value": false
+  },
+  {
+   "optionDest": "strip",
+   "value": false
+  },
+  {
+   "optionDest": "noupx",
+   "value": false
+  },
+  {
+   "optionDest": "uac_admin",
+   "value": false
+  },
+  {
+   "optionDest": "uac_uiaccess",
+   "value": false
+  },
+  {
+   "optionDest": "win_private_assemblies",
+   "value": false
+  },
+  {
+   "optionDest": "win_no_prefer_redirects",
+   "value": false
+  },
+  {
+   "optionDest": "bootloader_ignore_signals",
+   "value": false
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/bin_data.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/ConvertMain.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/cwa_metadata.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/Multithread.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/rapidCWA.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/ResampleController.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/Resampler.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/UnitTest.py;."
+  }
+ ],
+ "nonPyinstallerOptions": {
+  "increaseRecursionLimit": true,
+  "manualArguments": ""
+ }
+}
