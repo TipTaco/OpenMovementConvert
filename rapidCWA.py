@@ -5,6 +5,8 @@
 import numpy as np
 from numpy.lib import recfunctions as rfn
 from datetime import datetime
+from scipy import interpolate
+import Resampler
 
 # Layout
 # 1) Load file
@@ -44,7 +46,7 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
 
     current_time = datetime.now().strftime("%H:%M:%S")
     print("Read Complete.(", current_time, ")")
-    return masterArray
+    return masterArray.view(np.int16).reshape(masterArray.shape + (-1,)).transpose()
 
 def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
 
@@ -92,8 +94,8 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
         iScale = scaleFactors[i//3]  # First three channels take scaleFactor[0], 4-6 take scaleFactor[1] etc
 
         if sizeBytes == 2:
-            maxVal = arrayIn[cols[i]].max() / iScale
-            minVal = arrayIn[cols[i]].min() / iScale
+            maxVal = arrayIn[i].max() / iScale
+            minVal = arrayIn[i].min() / iScale
             rangeVal = maxVal - minVal
 
             # Write the min and max values for catman to use
@@ -101,15 +103,56 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             fp.write(maxVal.astype('float64').tobytes())
 
             # Write the data in levels between 0 and [divisor]
-            fp.write(((arrayIn[cols[i]] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
+            fp.write(((arrayIn[i] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
         else:
-            fp.write((arrayIn[cols[i]]/ iScale).astype(type).tobytes())
+            fp.write((arrayIn[i]/ iScale).astype(type).tobytes())
         print("Logger Channel", cols[i], "written")
 
     fp.close()
 
     current_time = datetime.now().strftime("%H:%M:%S")
     print("Writing complete. (", current_time, ")")
+
+
+def resample_linear(arrayIn, targetStart, targetStop, targetFreq, logger, cols=['X', 'Y', 'Z']):
+
+    numSamples = logger['file']['numSamples']
+    numChannels = int(logger['first']['channels'])
+    dataSet = Resampler.DataSet(logger['first']['timestamp'], logger['last']['timestamp'], numSamples, numChannels, None)
+
+    types = ['i2'] * numChannels  # The 2byte integer layout
+    layout = np.dtype({'names': cols, 'formats': types})  # Name the columns of the array
+
+    oStartTime = int(dataSet.startTime * 1e9)
+    oStopTime = int(dataSet.stopTime * 1e9)
+    #oDuration = int(oStopTime - oStartTime)  # Time in whole nanosectons
+    oSamples = dataSet.numSamples
+    oFreq = dataSet.numSamples / (dataSet.stopTime - dataSet.startTime)
+    #oDt = int((1.0 / oFreq) * 1e9)  # Delta time in nanoseconds
+
+    tStartTime = int(targetStart * 1e9)
+    tStopTime = int(targetStop * 1e9)
+    tFreq = targetFreq
+    tSamples = int((tStopTime - tStartTime) * tFreq / 1e9)
+    print(oStartTime, oStopTime, oFreq, oSamples)
+    print(tStartTime, tStopTime, tFreq, tSamples)
+    tDt = int((1.0 / tFreq) * 1e9)  # Target delta time in nanoseconds
+
+    oX = np.arange(oStartTime, oStopTime-1e9/oFreq, 1e9/oFreq)
+    xnew = np.arange(tStartTime, tStopTime-(1e9/tFreq), 1e9/tFreq)
+
+    print(len(oX), len(arrayIn), len(xnew))
+    print(oX.dtype)
+    print(arrayIn.shape)
+
+    linInter = interpolate.interp1d(oX, arrayIn, copy=True)
+
+    output = linInter(xnew)
+    print(output.shape)
+
+    outarray = np.zeros((numChannels, len(xnew)))
+
+    return output
 
 
 def method1(filePath):

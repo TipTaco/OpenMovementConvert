@@ -186,7 +186,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     dirname = os.path.dirname(outputFile)
 
     comment = "Resampling "
-    if (resample):
+    if resample:
         comment += "on at " + str(resampleFreq) + "Hz"
     else: comment += "off."
     (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, byteWidth)
@@ -210,7 +210,12 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         fp = logger['filePath']
         print("")  # Blank Display Line
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
-        # TODO add in resampling here
+
+        print("Read array as ", masterArray.shape)
+
+        if resample:
+            masterArray = rCWA.resample_linear(masterArray, rzStart, rzStop, resampleFreq, logger)
+
         offset = lastFilePos + loggerOffsets[i]
         rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=offset, sizeBytes=byteWidth, cols=axis)
 
@@ -250,7 +255,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         pool.close()
     """
 
-    if (resample):
+    if resample:
         write_tst_resampled(dirname + "/" + base, channel_list)
     else:
         write_tst_convert(dirname + "/" + base, channel_list)

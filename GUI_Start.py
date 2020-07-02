@@ -158,7 +158,7 @@ class PrefForm():
         self.trimText = tk.Label(self.t5_1, text="Start Time:     N/A\nFinish Time:   N/A\nSamples:        N/A", justify=tk.LEFT)
         self.trimText.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
 
-        # Parallelism options
+        # Parallelism options - DISABLED for now
         '''multi = self.multithread
         state = tk.NORMAL if self.multithread else tk.DISABLED
         self.paraWarn = tk.Label(self.t6, text="WARNING:\n  Only set the threads to number of processing cores or less." +
@@ -171,6 +171,7 @@ class PrefForm():
         self.paraCores = tk.Spinbox(self.t6, width = 10, from_=1, to_=64, increment=1, state=state, textvariable=defaultCores, borderwidth = 2)
         self.paraCores.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)'''
 
+        # Instead place the byte width selector here
         self.outputDesc = tk.Label(self.t6, text="Catman Ouput File (.BIN) format: \n" +
                                                  "  8 Byte Spacing (Full size) 🡒 4GB output per 1GB input\n" +
                                                  "  4 Byte Spacing (Half Size) 🡒 2GB output per 1GB input\n" +
@@ -259,7 +260,7 @@ class PrefForm():
         trimEnd = float(eval(self.trimEndInput.get())) * 60.0
 
         resampleFreq = float(self.resFreqInput.get())
-        numThreads = int(self.paraCores.get())
+        numThreads = 1 # DISABLED int(self.paraCores.get())
 
         (startTime, endTime, numSamples) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample,
                                                                              resampleFreq=resampleFreq, multithread=self.multithread,

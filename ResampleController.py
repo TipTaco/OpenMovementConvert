@@ -84,7 +84,7 @@ def resample_logger_data(inParam: []):
 
     print("num samples", numSamples)
 
-    dataSet: DataSet = Resampler.DataSet(logger['first']['timestamp'], logger['last']['timestamp'],
+    dataSet: Resampler.DataSet = Resampler.DataSet(logger['first']['timestamp'], logger['last']['timestamp'],
                                          numSamples, numChannels, toBeResampled)
 
     # Resample in here

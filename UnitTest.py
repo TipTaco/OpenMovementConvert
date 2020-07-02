@@ -2,6 +2,7 @@
 
 import rapidCWA as rCWA
 import time
+import numpy as np
 
 # Code goes here
 
@@ -14,6 +15,7 @@ dummy['first']['samplesPerSector'] = 80
 
 startTime = time.time()
 
+'''
 for file in files:
     masterArray = rCWA.readToMem(base+file, dummy)  # rCWA.method1(base + file)
     #rCWA.writeToFile(masterArray, base+file, 0, sizeBytes=4)
@@ -21,3 +23,14 @@ for file in files:
 finishTime = time.time()
 deltaT = finishTime - startTime
 print(deltaT)
+'''
+
+x = np.array([(1.0, 4.0, 6.5, ), (2.0, -1.0, 20.0), (2.0, -1.0, 20.0), (2.0, -1.0, 20.0), (2.0, -1.0, 20.0)], dtype=[('X', '<i2'), ('Y', '<i2'), ('Z', '<i2')])
+print(x)
+print(x['X'])
+print(x.shape)
+
+y= x.view(np.int32).reshape(x.shape + (-1,)).transpose()
+print(y)
+print(y.shape)
+print(y[0])
