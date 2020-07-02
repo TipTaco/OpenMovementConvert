@@ -100,7 +100,7 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             fp.write(minVal.astype('float64').tobytes())
             fp.write(maxVal.astype('float64').tobytes())
 
-            # Write the data in levels between 0 and divisor
+            # Write the data in levels between 0 and [divisor]
             fp.write(((arrayIn[cols[i]] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
         else:
             fp.write((arrayIn[cols[i]]/ iScale).astype(type).tobytes())

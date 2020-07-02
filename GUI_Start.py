@@ -66,6 +66,7 @@ class PrefForm():
         self.resampleFreq: float = 800.0
         self.multithread: bool = False
         self.numThreads: int = 4
+        self.byteWidth: int = 8
 
         self.masterFrame = tk.Frame(self.root)
         self.masterFrame.pack(anchor=tk.NW, fill=tk.BOTH, expand=True, side=tk.TOP, pady=1, padx=1)
@@ -158,7 +159,7 @@ class PrefForm():
         self.trimText.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
 
         # Parallelism options
-        multi = self.multithread
+        '''multi = self.multithread
         state = tk.NORMAL if self.multithread else tk.DISABLED
         self.paraWarn = tk.Label(self.t6, text="WARNING:\n  Only set the threads to number of processing cores or less." +
                                                "\n  Using more cores in combination with large input files may cause instablity. " +
@@ -168,7 +169,19 @@ class PrefForm():
         self.paraCheck.pack(anchor=tk.NW, side = tk.LEFT, pady = 5, padx =5)
         defaultCores = tk.IntVar(value=int(self.numThreads))
         self.paraCores = tk.Spinbox(self.t6, width = 10, from_=1, to_=64, increment=1, state=state, textvariable=defaultCores, borderwidth = 2)
-        self.paraCores.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)
+        self.paraCores.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)'''
+
+        self.outputDesc = tk.Label(self.t6, text="Catman Ouput File (.BIN) format: \n" +
+                                                 "  8 Byte Spacing (Full size) 🡒 4GB output per 1GB input\n" +
+                                                 "  4 Byte Spacing (Half Size) 🡒 2GB output per 1GB input\n" +
+                                                 "  2 Byte Spacing (Quater Size) 🡒 1GB output per 1GB input. (May take 25% longer to generate)",
+                                   fg="blue", justify=tk.LEFT)
+        self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=5)
+
+        self.bytesVar = tk.StringVar(self.root)
+        self.bytesVar.set("8 Byte")
+        self.byteDropDown = tk.OptionMenu(self.t6, self.bytesVar, "8 Byte", "4 Byte", "2 Byte", command=self.byteSelect)
+        self.byteDropDown.pack(side=tk.TOP, anchor=tk.N, padx= 10, pady=5)
 
         # Now get file output
         self.outLabel = tk.Label(self.b1, justify=tk.LEFT, width = 10, text="Output File")
@@ -189,12 +202,23 @@ class PrefForm():
 
         self.root.mainloop()
 
+    def byteSelect(self, dummy):
+        ''' Update the currently selected byte width using dropdown'''
+        if "2" in self.bytesVar.get():
+            self.byteWidth = 2
+        elif "4" in self.bytesVar.get():
+            self.byteWidth = 4
+        else:
+            self.byteWidth = 8
+
+
     def changeTogglePara(self):
         self.multithread = not self.multithread
 
         state = tk.NORMAL if self.multithread else tk.DISABLED
         self.paraCores.config(state=state)
         self.numThreads = self.paraCores.get()
+
 
     def changeToggleRes(self):
         self.resample = not self.resample
@@ -204,6 +228,7 @@ class PrefForm():
         self.trimStartInput.config(state=state)
         self.trimEndInput.config(state=state)
         self.trimButton.config(state=state)
+
 
     def inBrowse(self):
         files = filedialog.askopenfilenames(title="Open .cwa files", filetypes=[("CWA files", ".cwa")])
@@ -219,6 +244,7 @@ class PrefForm():
         self.inDisplay.insert(0, stringName)
         self.inDisplay.config(state=tk.DISABLED)
 
+
     def outBrowse(self):
         file = filedialog.asksaveasfilename(title="Save .TST file", filetypes=[("TST files", ".tst")])
         self.saveName = file
@@ -226,6 +252,7 @@ class PrefForm():
         self.outDisplay.delete(0, "end")
         self.outDisplay.insert(0, self.saveName)
         self.outDisplay.config(state=tk.DISABLED)
+
 
     def testResampleRange(self):
         trimStart = float(eval(self.trimStartInput.get())) * 60.0
@@ -242,6 +269,7 @@ class PrefForm():
 
         output = "Start Time:     " + start + "\nFinish Time:   " + end + "\nSamples:        " + str(numSamples)
         self.trimText.config(text=output)
+
 
     def confirm(self):
         trimStart = float(eval(self.trimStartInput.get())) * 60.0
@@ -260,10 +288,10 @@ class PrefForm():
             return
 
         resampleFreq = float(self.resFreqInput.get())
-        numThreads = int(self.paraCores.get())
+        numThreads = 1 # int(self.paraCores.get())  DISABLED
 
         self.thread1 = threading.Thread(target=ConvertMain.compute_multi_channel, args=(self.filePaths, self.saveName, self.resample, resampleFreq,
-                                          self.multithread, numThreads, trimStart, trimEnd, False))
+                                          self.multithread, numThreads, trimStart, trimEnd, False, self.byteWidth))
         self.thread1.start()
 
         #time.sleep(1)

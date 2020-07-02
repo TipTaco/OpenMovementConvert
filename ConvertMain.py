@@ -86,7 +86,7 @@ def save_file_name():
     file = filedialog.asksaveasfilename(filetypes=[("TST files", ".tst")])
     return file
 
-def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ, multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0, demoRun = False):
+def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ, multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0, demoRun = False, byteWidth=OUTPUT_DATA_WIDTH):
     """ Operates on many
     Each physical logger has three accelerometer axis and as such will command THREE channels
     """
@@ -177,7 +177,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
             channel_list.append(channel_object)
 
         # When writing out the data file, need to know exact position of data (either scaled or not)
-        loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * OUTPUT_DATA_WIDTH)
+        loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * byteWidth)
         #print("last offset", loggerOffsets[-1])
 
     # Manipulate file paths
@@ -189,7 +189,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     if (resample):
         comment += "on at " + str(resampleFreq) + "Hz"
     else: comment += "off."
-    (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, OUTPUT_DATA_WIDTH)
+    (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, byteWidth)
 
     print("Saving output file to", dirname + "/")
 
@@ -212,7 +212,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
         # TODO add in resampling here
         offset = lastFilePos + loggerOffsets[i]
-        rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=offset, sizeBytes=OUTPUT_DATA_WIDTH, cols=axis)
+        rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=offset, sizeBytes=byteWidth, cols=axis)
 
     deltaT = time.time() - startTime
     print("\n Completed in", round(deltaT, 2), "s")
