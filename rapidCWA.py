@@ -70,19 +70,40 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
     fp = open(filePath, 'ab+')
 
     type = 'float64'
-    if (sizeBytes == 4):
+    divisor = 1
+    if sizeBytes == 4:
         type = 'float32'
-    elif (sizeBytes == 2):
-        type = 'float16'
+    elif sizeBytes == 2:
+        type = 'uint16'
+        divisor = pow(2, 16-1) - 1
 
     fp.seek(offsetBytes)
+
+    # For 2 byte files, the method is slightly different
+    # 8 byte float min
+    # 8 byte float max
+    # Data points between 0 and 2^(16-1)-1 for 2byte
+
 
     # print(len(arrayIn[cols[0]]))
     # print(arrayIn[cols[0]].astype(type).itemsize)
 
     for i in range(numChannels):
         iScale = scaleFactors[i//3]  # First three channels take scaleFactor[0], 4-6 take scaleFactor[1] etc
-        fp.write((arrayIn[cols[i]]/ iScale).astype(type).tobytes())
+
+        if sizeBytes == 2:
+            maxVal = arrayIn[cols[i]].max() / iScale
+            minVal = arrayIn[cols[i]].min() / iScale
+            rangeVal = maxVal - minVal
+
+            # Write the min and max values for catman to use
+            fp.write(minVal.astype('float64').tobytes())
+            fp.write(maxVal.astype('float64').tobytes())
+
+            # Write the data in levels between 0 and divisor
+            fp.write(((arrayIn[cols[i]] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
+        else:
+            fp.write((arrayIn[cols[i]]/ iScale).astype(type).tobytes())
         print("Logger Channel", cols[i], "written")
 
     fp.close()

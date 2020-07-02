@@ -30,7 +30,7 @@ NUM_THREADS: int = 4
 MULTITHREAD: bool = True
 RESAMPLE: bool = True
 RESAMPLE_FREQ: float = 800.0
-OUTPUT_DATA_WIDTH: int = 8
+OUTPUT_DATA_WIDTH: int = 4
 
 def main():
     """ Main function decl. This will be the position in file that is run to start with.
