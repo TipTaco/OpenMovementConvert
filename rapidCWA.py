@@ -123,29 +123,30 @@ def resample_linear(arrayIn, targetStart, targetStop, targetFreq, logger, cols=[
     types = ['i2'] * numChannels  # The 2byte integer layout
     layout = np.dtype({'names': cols, 'formats': types})  # Name the columns of the array
 
-    oStartTime = int(dataSet.startTime * 1e9)
-    oStopTime = int(dataSet.stopTime * 1e9)
+    oStartTime = dataSet.startTime
+    oStopTime = dataSet.stopTime
     #oDuration = int(oStopTime - oStartTime)  # Time in whole nanosectons
     oSamples = dataSet.numSamples
     oFreq = dataSet.numSamples / (dataSet.stopTime - dataSet.startTime)
     #oDt = int((1.0 / oFreq) * 1e9)  # Delta time in nanoseconds
 
-    tStartTime = int(targetStart * 1e9)
-    tStopTime = int(targetStop * 1e9)
+    tStartTime = targetStart
+    tStopTime = targetStop
     tFreq = targetFreq
-    tSamples = int((tStopTime - tStartTime) * tFreq / 1e9)
+    tSamples = int((tStopTime - tStartTime) * tFreq)
     print(oStartTime, oStopTime, oFreq, oSamples)
     print(tStartTime, tStopTime, tFreq, tSamples)
-    tDt = int((1.0 / tFreq) * 1e9)  # Target delta time in nanoseconds
+    #tDt = int((1.0 / tFreq) * 1e9)  # Target delta time in nanoseconds
 
-    oX = np.arange(oStartTime, oStopTime-1e9/oFreq, 1e9/oFreq)
-    xnew = np.arange(tStartTime, tStopTime-(1e9/tFreq), 1e9/tFreq)
+    oX = np.arange(oStartTime, oStopTime, 1/oFreq)
+    xnew = np.arange(tStartTime, tStopTime, 1/tFreq)
 
     print(len(oX), len(arrayIn), len(xnew))
     print(oX.dtype)
+    print("First and last values", oX[0], oX[-1], xnew[0], xnew[-1])
     print(arrayIn.shape)
 
-    linInter = interpolate.interp1d(oX, arrayIn, copy=True)
+    linInter = interpolate.interp1d(oX, arrayIn, copy=False, fill_value="extrapolate", assume_sorted=True)
 
     output = linInter(xnew)
     print(output.shape)

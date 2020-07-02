@@ -84,7 +84,7 @@ def get_range(min_max_start, min_max_stop, freq, trimStart, trimEnd):
     """Returns the tuple of values
             (resampleStart, resampleStop, numSamples)"""
 
-    marginSeconds = (1.0 / freq) * 5.0
+    marginSeconds = 0 # (1.0 / freq) * 0.1
 
     realStart = min_max_start["max"] + marginSeconds + max(trimStart, 0)
     realStop = min_max_stop["min"] - marginSeconds - max(trimEnd, 0)
