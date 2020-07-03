@@ -137,8 +137,6 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         return (0, 0, 0, rate)
 
     # Get resample ranges
-    #print(startTime)
-    #print(stopTime)
     (rzStart, rzStop, rzSamples) = Resampler.get_range(startTime, stopTime, resampleFreq, trimStart, trimEnd)
 
     if (demoRun):
@@ -177,11 +175,12 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         # generate a Channel object for each channel
         for i in range(numChannelsPerLogger):
             channelName = loggerId + "_" + sessionId + "_" + axis[i]
-            channel_object = BIN.Channel(loggerPath, channelName, "comment", loggerId, sessionId, numSamples, sampleRate, startTime, endTime)
+            channel_object = BIN.Channel(loggerPath, channelName, "[no comment]", loggerId, sessionId, numSamples, sampleRate, startTime, endTime)
             channel_list.append(channel_object)
 
         # When writing out the data file, need to know exact position of data (either scaled or not)
-        loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * byteWidth)
+        extras = 0 if byteWidth != 2 else 16
+        loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * byteWidth + extras)
         #print("last offset", loggerOffsets[-1])
 
     # Manipulate file paths
@@ -222,8 +221,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
             endVal = float(logger['last']['timestamp'])
             masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)#rCWA.resample_linear(masterArray, rzStart, rzStop, resampleFreq, logger)
 
-        offset = lastFilePos + loggerOffsets[i]
-        rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=offset, sizeBytes=byteWidth, cols=axis)
+        lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos, sizeBytes=byteWidth, cols=axis)
 
     deltaT = time.time() - startTime
     print("\n Completed in", round(deltaT, 2), "s")

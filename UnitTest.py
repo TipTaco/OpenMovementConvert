@@ -42,6 +42,9 @@ y = np.arctan(np.sin(x/10)+1).reshape((1, len(x)))
 
 V = rInterpolate.interp1d(y, 0, 1000, 100, 900, 50)
 
+print(y[0].max())
+print(V[0].max())
+
 plt.plot(x, y[0])
 plt.plot(np.arange(100, 900.001, 50), V[0])
 plt.show()

@@ -98,6 +98,9 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             minVal = arrayIn[i].min() / iScale
             rangeVal = maxVal - minVal
 
+            print("File max at", arrayIn[i].argmax(), maxVal)
+            print("File min at", arrayIn[i].argmin(), minVal)
+
             # Write the min and max values for catman to use
             fp.write(minVal.astype('float64').tobytes())
             fp.write(maxVal.astype('float64').tobytes())
@@ -108,10 +111,12 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             fp.write((arrayIn[i]/ iScale).astype(type).tobytes())
         print("Logger Channel", cols[i], "written")
 
+    lastPos = fp.tell()
     fp.close()
 
     current_time = datetime.now().strftime("%H:%M:%S")
     print("Writing complete. (", current_time, ")")
+    return lastPos
 
 
 def resample_linear(arrayIn, targetStart, targetStop, targetFreq, logger, cols=['X', 'Y', 'Z']):

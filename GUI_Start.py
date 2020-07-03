@@ -68,7 +68,7 @@ class PrefForm():
         self.numThreads: int = 4
         self.byteWidth: int = 8
 
-        self.loggerFrequency: int = 0
+        self.loggerFrequency: float = 800.0
 
         self.masterFrame = tk.Frame(self.root)
         self.masterFrame.pack(anchor=tk.NW, fill=tk.BOTH, expand=True, side=tk.TOP, pady=1, padx=1)
@@ -285,7 +285,7 @@ class PrefForm():
         trimStart = float(eval(self.trimStartInput.get())) * 60.0
         trimEnd = float(eval(self.trimEndInput.get())) * 60.0
 
-        resampleFreq = float(self.resFreqInput.get())
+        resampleFreq = self.loggerFrequency
         numThreads = 1 # DISABLED int(self.paraCores.get())
 
         (startTime, endTime, numSamples, _) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample,
@@ -305,16 +305,16 @@ class PrefForm():
         # Checks
         if len(self.filePaths) == 0:
             self.statusText.config(text="No valid input files")
-            print("Error, terminating")
+            print("Error, No file Selected")
             return
 
         # Get the user to specify at least one output file
         if self.saveName == "":
             self.statusText.config(text="No valid output file")
-            print("Error, terminating")
+            print("Error, No file Selected")
             return
 
-        resampleFreq = float(self.resFreqInput.get())
+        resampleFreq = self.loggerFrequency
         numThreads = 1 # int(self.paraCores.get())  DISABLED
 
         self.thread1 = threading.Thread(target=ConvertMain.compute_multi_channel, args=(self.filePaths, self.saveName, self.resample, resampleFreq,

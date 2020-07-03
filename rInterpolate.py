@@ -33,7 +33,7 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
 
         linspac = np.linspace(startInterp, endInterp, outputSamples)
 
-        lo = ((linspac - startVal) / inputDelta).astype(np.uint32)
+        lo = ((linspac - startVal) / inputDelta).astype(np.int32)
         lo[lo>=y.shape[1]] = y.shape[1] - 2
         # print("lo", lo)
 
@@ -42,9 +42,14 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
 
         del linspac
         # print("B", B)
+        # yy = y.view(np.float64)
 
-        V = y[:,lo] + (B/inputDelta) * (y[:,lo] - y[:,lo + 1])
+        V = (y[:,lo] + (B/inputDelta) * (y[:,lo + 1] - y[:,lo])).astype(np.int16)
         # print("V", V)
+
+        #for i in range(0, 50000000, 1000000):
+        #        print(V[0][i], "from [", lo[i], "]", y[0,i], y[0,i+1])
+
         del lo
         del B
 

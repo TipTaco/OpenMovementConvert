@@ -96,7 +96,7 @@ def get_range(min_max_start, min_max_stop, freq, trimStart, trimEnd):
     if (duration) <= 0: print("Error: resample interval less than 0")
 
     # Whole integer number of samples
-    numSamples = int(duration * freq)
+    numSamples = int(duration * freq) + 1
 
     # New stop time, a whole number of samples after startTime
     # Add half a wave so that the resample algo will get the same number of samples.
