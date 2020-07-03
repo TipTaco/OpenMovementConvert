@@ -68,6 +68,8 @@ class PrefForm():
         self.numThreads: int = 4
         self.byteWidth: int = 8
 
+        self.loggerFrequency: int = 0
+
         self.masterFrame = tk.Frame(self.root)
         self.masterFrame.pack(anchor=tk.NW, fill=tk.BOTH, expand=True, side=tk.TOP, pady=1, padx=1)
 
@@ -114,8 +116,9 @@ class PrefForm():
 
 
         # Instructions box
-        self.instruction = tk.Label(self.t1, justify=tk.LEFT, text="Usage instructions: \n 1) Select logger files (.cwa) \n 2) (Optional) Choose to resample at a frequency \n 3) Select processing options \n 4) Select output file name and location \n 5) Press convert" +
-                                    "\n\n *Note* 1GB input file ≈ 3.75GB output file. Make sure you have disk space!")
+        self.instruction = tk.Label(self.t1, justify=tk.LEFT, text="Usage instructions: \n 1) Select logger files (.cwa)" +
+                                    "\n 2) (Optional) Choose to resample at a frequency \n 3) Select processing options" +
+                                    "\n 4) Select output file name and location \n 5) Press convert")
         self.instruction.pack(anchor=tk.W, pady=10, padx=10)
 
         #Input files selection one textbox one label
@@ -128,11 +131,15 @@ class PrefForm():
 
         # Resample button and text and frequency selector
         state = tk.NORMAL if self.resample else tk.DISABLED
-        self.resCheck = tk.Checkbutton(self.t3, width = 22, text="Resample", justify=tk.LEFT, command=self.changeToggleRes)
+        self.frequencyText = tk.StringVar()
+        self.frequencyText.set('---')
+        self.resCheck = tk.Checkbutton(self.t3, width = 22, text="Resample", justify=tk.LEFT, command=self.getLoggerRate)
         self.resCheck.pack(anchor=tk.NW, side = tk.LEFT, pady = 5, padx =5)
-        defaultFreq = tk.DoubleVar(value=self.resampleFreq)
-        self.resFreqInput = tk.Spinbox(self.t3, width = 10, from_=0.5, to_=10000.0, increment=1.0, borderwidth=2, textvariable=defaultFreq, state=state)
-        self.resFreqInput.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)
+        self.resFreq = tk.Label(self.t3, textvariable=self.frequencyText)
+        self.resFreq.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)
+        #defaultFreq = tk.DoubleVar(value=self.resampleFreq)
+        #self.resFreqInput = tk.Spinbox(self.t3, width = 10, from_=0.5, to_=10000.0, increment=1.0, borderwidth=2, textvariable=defaultFreq, state=state)
+        #self.resFreqInput.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)
         self.resHz = tk.Label(self.t3, text="Hz")
         self.resHz.pack(side=tk.LEFT)
 
@@ -173,9 +180,9 @@ class PrefForm():
 
         # Instead place the byte width selector here
         self.outputDesc = tk.Label(self.t6, text="Catman Ouput File (.BIN) format: \n" +
-                                                 "  8 Byte Spacing (Full size) 🡒 4GB output per 1GB input\n" +
-                                                 "  4 Byte Spacing (Half Size) 🡒 2GB output per 1GB input\n" +
-                                                 "  2 Byte Spacing (Quater Size) 🡒 1GB output per 1GB input. (May take 25% longer to generate)",
+                                                 "  8 Byte Spacing (Full size)     4GB output 🡒 1GB input\n" +
+                                                 "  4 Byte Spacing (Half Size)     2GB output 🡒 1GB input\n" +
+                                                 "  2 Byte Spacing (Quater Size)   1GB output 🡒 1GB input (May take 10% longer to generate)",
                                    fg="blue", justify=tk.LEFT)
         self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=5)
 
@@ -225,7 +232,7 @@ class PrefForm():
         self.resample = not self.resample
 
         state = tk.NORMAL if self.resample else tk.DISABLED
-        self.resFreqInput.config(state=state)
+        #self.resFreqInput.config(state=state)
         self.trimStartInput.config(state=state)
         self.trimEndInput.config(state=state)
         self.trimButton.config(state=state)
@@ -255,6 +262,25 @@ class PrefForm():
         self.outDisplay.config(state=tk.DISABLED)
 
 
+    def getLoggerRate(self):
+        self.changeToggleRes()
+
+        (_, _, _, rate) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName,
+                                                                                   resample=self.resample,getFreq=True)
+        freqLoggers = "---"
+
+        if float(rate['max']) - float(rate['min']) > 70.0:
+            freqLoggers = "ERROR, All Loggers are not same rate!"
+        elif not self.resample:
+            freqLoggers = "---"
+        elif float(rate['average']) == 0.0:
+            freqLoggers = "No loggers Selected! ---"
+        else:
+            self.loggerFrequency = round(float(rate['average']) / 100.0, 0) * 100
+            freqLoggers = str(self.loggerFrequency)
+
+        self.frequencyText.set(freqLoggers)
+
     def testResampleRange(self):
         trimStart = float(eval(self.trimStartInput.get())) * 60.0
         trimEnd = float(eval(self.trimEndInput.get())) * 60.0
@@ -262,7 +288,7 @@ class PrefForm():
         resampleFreq = float(self.resFreqInput.get())
         numThreads = 1 # DISABLED int(self.paraCores.get())
 
-        (startTime, endTime, numSamples) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample,
+        (startTime, endTime, numSamples, _) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample,
                                                                              resampleFreq=resampleFreq, multithread=self.multithread,
                                                                              nThreads=numThreads, demoRun=True, trimStart=trimStart, trimEnd=trimEnd)
         start = CWA.timezone_timestamp_string(startTime)

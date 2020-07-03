@@ -5,6 +5,7 @@
 
 import cwa_metadata as CWA   # cwa file type converter
 import rapidCWA as rCWA  # Rapid cwa file loader
+import rInterpolate as rInter  # Rapid interpolator
 import bin_data as BIN  # bin file type converter
 
 import os
@@ -86,7 +87,7 @@ def save_file_name():
     file = filedialog.asksaveasfilename(filetypes=[("TST files", ".tst")])
     return file
 
-def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ, multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0, demoRun = False, byteWidth=OUTPUT_DATA_WIDTH):
+def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ, multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0, demoRun = False, byteWidth=OUTPUT_DATA_WIDTH, getFreq=False):
     """ Operates on many
     Each physical logger has three accelerometer axis and as such will command THREE channels
     """
@@ -132,13 +133,16 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     if logger_out_of_range(10000, stopTime): print("End time out of range", stopTime)
     if logger_out_of_range(1, stopTime): print("End time out of range", channels)
 
+    if getFreq:
+        return (0, 0, 0, rate)
+
     # Get resample ranges
     #print(startTime)
     #print(stopTime)
     (rzStart, rzStop, rzSamples) = Resampler.get_range(startTime, stopTime, resampleFreq, trimStart, trimEnd)
 
     if (demoRun):
-        return (rzStart, rzStop, rzSamples)
+        return (rzStart, rzStop, rzSamples, rate)
 
     # Now generate the BIN header file for all the good (in range) loggers
     ##TODO eliminate bad or out of range loggers
@@ -214,7 +218,9 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         print("Read array as ", masterArray.shape)
 
         if resample:
-            masterArray = rCWA.resample_linear(masterArray, rzStart, rzStop, resampleFreq, logger)
+            startVal = float(logger['first']['timestamp'])
+            endVal = float(logger['last']['timestamp'])
+            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)#rCWA.resample_linear(masterArray, rzStart, rzStop, resampleFreq, logger)
 
         offset = lastFilePos + loggerOffsets[i]
         rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=offset, sizeBytes=byteWidth, cols=axis)
