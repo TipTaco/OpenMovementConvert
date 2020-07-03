@@ -28,8 +28,8 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
         if kind != 'linear':
             raise ValueError("The interpolation type must be linear")
 
-        print("Input stats:", startVal, endVal, inputDelta, y.shape)
-        print("Output stats:", startInterp, endInterp, outputDelta, outputSamples)
+        #print("Input stats:", startVal, endVal, inputDelta, y.shape)
+        #print("Output stats:", startInterp, endInterp, outputDelta, outputSamples)
 
         linspac = np.linspace(startInterp, endInterp, outputSamples)
 
@@ -38,19 +38,28 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
         # print("lo", lo)
 
         # print("linspac", linspac)
-        B = linspac - (startVal + lo * inputDelta)
+        B = (linspac - (startVal + lo * inputDelta)) / inputDelta
 
-        del linspac
+        #del linspac
         # print("B", B)
         # yy = y.view(np.float64)
 
-        V = (y[:,lo] + (B/inputDelta) * (y[:,lo + 1] - y[:,lo])).astype(np.int16)
-        # print("V", V)
+        print("Resample Begin")
 
-        #for i in range(0, 50000000, 1000000):
-        #        print(V[0][i], "from [", lo[i], "]", y[0,i], y[0,i+1])
+        # Interpolation line
+        V = np.zeros((3, len(B)), dtype=np.float32)
+        for i in range(3):
+                V[i, :] = (y[i,lo] + B * (y[i,lo + 1] - y[i,lo]))
 
-        del lo
-        del B
+        print("Resample Complete")
+        for i in range(10, 50000000, 10000000):
+               print(V[:,i], "from [", lo[i], "]", y[:,i], y[:,i+1], (B[i]), y[:,i] + (B[i]) * (y[:,i+1] - y[:,i]))
+               i += 1
+               print(V[:,i], "from [", lo[i], "]", y[:,i], y[:,i+1], (B[i]), y[:,i] + (B[i]) * (y[:,i+1] - y[:,i]))
+               i += 1
+               print(V[:,i], "from [", lo[i], "]", y[:, i], y[:, i + 1], (B[i]), y[:, i] + (B[i]) * (y[:, i + 1] - y[:, i]))
+
+        #del lo
+        #del B
 
         return V
