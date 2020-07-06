@@ -31,35 +31,50 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
         #print("Input stats:", startVal, endVal, inputDelta, y.shape)
         #print("Output stats:", startInterp, endInterp, outputDelta, outputSamples)
 
-        linspac = np.linspace(startInterp, endInterp, outputSamples)
+        print("Begin Resample")
 
-        lo = ((linspac - startVal) / inputDelta).astype(np.int32)
-        lo[lo>=y.shape[1]] = y.shape[1] - 2
-        # print("lo", lo)
+        # We have an input time sampled data set starting at startVal seconds, ending at endVal seconds with inputDelta seconds between samples
+        # We require an output time sampled data set that is a different frequency to the original set,
+        #   start time startInterp seconds
+        #   stop time: endInter seconds
+        #   time between samples: outputDelta
+        #   number of samples: outputSamples derived from (endInterp - startInterp) / outputDelta
 
-        # print("linspac", linspac)
-        B = (linspac - (startVal + lo * inputDelta)) / inputDelta
+        # Let N be number of samples and H be number of channels
 
-        #del linspac
-        # print("B", B)
-        # yy = y.view(np.float64)
+        # Get a linear spacing array of the actual time in seconds for all output points required [start:end:delta]
+        #   Shape = (N)
+        outSeq = (np.linspace(startInterp, endInterp, outputSamples) - startVal) / inputDelta
+        outSeq[outSeq >= y.shape[1]] = y.shape[1] - 2
 
-        print("Resample Begin")
+        print("Resample output defined")
+
+        # Get the whole integer index of the input sample for this linear interpolation
+        #
+        #   A *
+        #         *C
+        #               * B
+        # We have points A and B from the input set, and require C.
+        #   Shape = (N) as type INTEGER
+        lo = outSeq.astype(np.int32)
+        # Ensure that all values of the original input indexs are inbound.. this is a Hack and should be cleaned later
+
+        # The B array is an array that is the difference between the point C and the point A in the time domain
+        # It is the scale factor distance of C between A and B for all points in the new output
+        #   Shape = (N)
+        B = outSeq - lo
+        del outSeq
+
+        print("Resample subvalues computed")
 
         # Interpolation line
-        V = np.zeros((3, len(B)), dtype=np.float32)
-        for i in range(3):
-                V[i, :] = (y[i,lo] + B * (y[i,lo + 1] - y[i,lo]))
+        V = (y[:,lo] + B * (y[:,(lo + 1)] - y[:,lo]))
 
         print("Resample Complete")
-        for i in range(10, 50000000, 10000000):
-               print(V[:,i], "from [", lo[i], "]", y[:,i], y[:,i+1], (B[i]), y[:,i] + (B[i]) * (y[:,i+1] - y[:,i]))
-               i += 1
-               print(V[:,i], "from [", lo[i], "]", y[:,i], y[:,i+1], (B[i]), y[:,i] + (B[i]) * (y[:,i+1] - y[:,i]))
-               i += 1
-               print(V[:,i], "from [", lo[i], "]", y[:, i], y[:, i + 1], (B[i]), y[:, i] + (B[i]) * (y[:, i + 1] - y[:, i]))
+        #for i in range(0, 50000000, 10000000):
+         #   print(V[:,i], "from [", lo[i], "]", y[:,lo[i]], y[:,lo[i]+1], (B[i]), y[:,lo[i]] + (B[i]) * (y[:,lo[i]+1] - y[:,lo[i]]))
 
-        #del lo
-        #del B
+        del lo
+        del B
 
         return V
