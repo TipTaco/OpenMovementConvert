@@ -13,7 +13,7 @@ import threading
 from multiprocessing import freeze_support
 
 PROCESS: str = 'CWA_to_BIN'
-VERSION: str = 'v0.9'
+VERSION: str = 'v1.01'
 
 
 class PrefForm():
