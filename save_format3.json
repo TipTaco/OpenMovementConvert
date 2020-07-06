@@ -19,7 +19,7 @@
   },
   {
    "optionDest": "name",
-   "value": "CWA_to_BIN_v0.7"
+   "value": "CWA_to_BIN_v0.9"
   },
   {
    "optionDest": "ascii",
@@ -80,6 +80,10 @@
   {
    "optionDest": "datas",
    "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/Resampler.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/ProgressPrinter.py;."
   }
  ],
  "nonPyinstallerOptions": {
