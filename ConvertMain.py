@@ -2,6 +2,7 @@
 # Author: Adrian Shedley with external code used from the open source OMGUI github for AX3
 # Date Created: 20 May 2020
 # Last Modified 1 July 2020 - Modifications to speed up conversion by 40x
+# Last Modified 6 July 2020 - Performance tweaks as well as linear interpolation method added.
 
 import cwa_metadata as CWA   # cwa file type converter
 import rapidCWA as rCWA  # Rapid cwa file loader
@@ -9,22 +10,12 @@ import rInterpolate as rInter  # Rapid interpolator
 import bin_data as BIN  # bin file type converter
 
 import os
-
-from struct import *
-
-import tkinter as tk
-from tkinter import filedialog
-
 import time
-
 from multiprocessing import freeze_support
 
 import Resampler as Resampler
 
-import Multithread as Multithread
 from datetime import datetime
-
-import ProgressPrinter as pbar
 
 # Global Vars
 NUM_THREADS: int = 4
@@ -96,8 +87,10 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     if demoRun:
         return (rzStart, rzStop, rzSamples, rate)
 
-    # Now generate the BIN header file for all the good (in range) loggers
-    # Write each of the channels into the channel list (for the BIN headers)
+    # # Finished with the GUI helper potion, do the actual conversion heavy lifting # #
+
+    # Set up the names of the logger channels depending on the number of channels of the max logger
+    #   Currently not supported mixing and matching of loggers with different numbers of channels
     axis = ['X', 'Y', 'Z']  # Update this if the logger has more than 3 channels to extract
     if channels['max'] == 6: axis = ["Ax", "Ay", "Az", "Gx", "Gy", "Gz"]
     if channels['max'] == 9: axis = ["Ax", "Ay", "Az", "Gx", "Gy", "Gz", "Mx", "My", "Mz"]
@@ -105,6 +98,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     loggerOffsets = []
     loggerOffsets.append(0)
 
+    # For each of the loggers (.cwa files), get the header details and place it into a header for the BIN format
     for logger in loggers:
         # Logger stats
         loggerId = str(logger['header']['deviceId'])
@@ -136,6 +130,8 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     base = os.path.splitext(base)[0]
     dirname = os.path.dirname(outputFile)
 
+    # Write the comment that will appear at the top of the catman test entry. This is a fast indication of if the
+    #   set of channels were resampled or not
     comment = "Linear Resampling "
     if resample:
         comment += "on at " + str(resampleFreq) + "Hz"
@@ -149,18 +145,19 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     f = open(outputPath, "wb")
     f.write(header)
     f.write(channelHeaders)
-    lastFilePos = f.tell()
+    lastFilePos = f.tell()  # Save the last position in file to continue writing data channels to
     f.flush()
     f.close()
 
-    # Multithreading disabled for now - Dropping in rapidCWA methods
+    # Multithreading disabled for now -
+    #   Instead use linear rapidCWA methods that are faster in series than old methods in parallel
     startTimeT = time.time()
 
-    # New and improved reading, resampling and output
-    for i, logger in enumerate(loggers):
+    # # Data Processing, one logger at a time # #
+    for i, logger in enumerate(loggers):    # New and improved reading, resampling and output
         fp = logger['filePath']
         print("")  # Blank Display Line
-        # Read the data only for this logger to array. This array will then be used to either resample or convert direct
+        # Read the data only for this logger to RAM array. This used to either resample or convert direct
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
 
         print(" Loaded ", masterArray.shape[0], " channels.", masterArray.shape[1], "samples each.")
