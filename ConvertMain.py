@@ -17,10 +17,8 @@ from tkinter import filedialog
 
 import time
 
-from multiprocessing import Pool
 from multiprocessing import freeze_support
 
-import ResampleController as ResCon
 import Resampler as Resampler
 
 import Multithread as Multithread
@@ -212,59 +210,32 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     for i, logger in enumerate(loggers):
         fp = logger['filePath']
         print("")  # Blank Display Line
+        # Read the data only for this logger to array. This array will then be used to either resample or convert direct
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
 
-        print("Read array as ", masterArray.shape)
+        print("Read from logger:", masterArray.shape[0], "channels with", masterArray.shape[1], "samples each.")
 
+        # If the resample option was selected, first resample the data before outputting it to the file
         if resample:
             startVal = float(logger['first']['timestamp'])
             endVal = float(logger['last']['timestamp'])
-            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)#rCWA.resample_linear(masterArray, rzStart, rzStop, resampleFreq, logger)
+            # Update the array in overwrite mode to contain the new resampled data
+            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
 
+        # Output the data for this logger to file and save the last position in file
         lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos, sizeBytes=byteWidth, cols=axis)
 
+    # Relay to the user how long the execution for all files took.
     deltaT = time.time() - startTime
     print("\n Completed in", round(deltaT, 2), "s")
 
-    """
-    # Make a processing pool
-    pool = None
-    if (multithread == True):
-        pool = Pool(processes=nThreads)
-
-    loggerJobs = []
-    for i,logger in enumerate(loggers):
-        taskConvertObj = Multithread.Task("Convert " + str(logger['header']['deviceId']), i, "CONVERT")
-        Multithread.add_task(taskConvertObj)
-
-        taskResampleObj = None
-        if (resample):
-            taskResampleObj = Multithread.Task("Resample " + str(logger['header']['deviceId']), i+len(loggers), "RESAMPLE")
-            Multithread.add_task(taskResampleObj)
-
-        # Build the loggerJobs to be sent to the resampler and converter
-        loggerJobs.append([logger, outputPath, lastFilePos + loggerOffsets[i], rzStart, rzStop, rzSamples, resampleFreq, taskConvertObj, taskResampleObj])
-
-    # Define processing method
-    methodPointer = get_logger_data
-    if (resample): methodPointer = ResCon.resample_logger_data
-
-    if (multithread == True):
-        values_out = pool.map(methodPointer, loggerJobs)
-    else:  # perform serial
-        for lg in loggerJobs:
-            methodPointer(lg)
-
-    if (multithread == True):
-        pool.close()
-    """
-
+    # Write out the .TST file for catman to read. This file is only a pointer to the .BIN and is for the user.
     if resample:
         write_tst_resampled(dirname + "/" + base, channel_list)
     else:
         write_tst_convert(dirname + "/" + base, channel_list)
 
-    print("\nSave Completed to", dirname + "/" + base)
+    print("\nSave Completed to", dirname + "/" + base + ".tst")
     print("( These windows may now be closed )")
 
 

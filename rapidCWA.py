@@ -1,12 +1,11 @@
 # Author: Adrian Shedley
 # Date 28 may 2020
-# Purpose: Provide a massive speed upgrade for reading in CWA file types
+# Purpose: Provide a massive speed upgrade for reading in CWA file types.
+#   Additionally handles the writing of the Catman BIN data from the sensors.
+# Last changed 6 July 2020, Adrian Shedley
 
 import numpy as np
-from numpy.lib import recfunctions as rfn
 from datetime import datetime
-from scipy import interpolate
-import Resampler
 
 # Layout
 # 1) Load file
@@ -86,10 +85,6 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
     # 8 byte float max
     # Data points between 0 and 2^(16-1)-1 for 2byte
 
-
-    # print(len(arrayIn[cols[0]]))
-    # print(arrayIn[cols[0]].astype(type).itemsize)
-
     for i in range(numChannels):
         iScale = scaleFactors[i//3]  # First three channels take scaleFactor[0], 4-6 take scaleFactor[1] etc
 
@@ -98,8 +93,8 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             minVal = arrayIn[i].min() / iScale
             rangeVal = maxVal - minVal
 
-            print("File max at", arrayIn[i].argmax(), maxVal)
-            print("File min at", arrayIn[i].argmin(), minVal)
+            #print("File max at", arrayIn[i].argmax(), maxVal)
+            #print("File min at", arrayIn[i].argmin(), minVal)
 
             # Write the min and max values for catman to use
             fp.write(minVal.astype('float64').tobytes())
@@ -117,115 +112,3 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
     current_time = datetime.now().strftime("%H:%M:%S")
     print("Writing complete. (", current_time, ")")
     return lastPos
-
-
-def resample_linear(arrayIn, targetStart, targetStop, targetFreq, logger, cols=['X', 'Y', 'Z']):
-
-    numSamples = logger['file']['numSamples']
-    numChannels = int(logger['first']['channels'])
-    dataSet = Resampler.DataSet(logger['first']['timestamp'], logger['last']['timestamp'], numSamples, numChannels, None)
-
-    types = ['i2'] * numChannels  # The 2byte integer layout
-    layout = np.dtype({'names': cols, 'formats': types})  # Name the columns of the array
-
-    oStartTime = dataSet.startTime
-    oStopTime = dataSet.stopTime
-    #oDuration = int(oStopTime - oStartTime)  # Time in whole nanosectons
-    oSamples = dataSet.numSamples
-    oFreq = dataSet.numSamples / (dataSet.stopTime - dataSet.startTime)
-    #oDt = int((1.0 / oFreq) * 1e9)  # Delta time in nanoseconds
-
-    tStartTime = targetStart
-    tStopTime = targetStop
-    tFreq = targetFreq
-    tSamples = int((tStopTime - tStartTime) * tFreq)
-    print(oStartTime, oStopTime, oFreq, oSamples)
-    print(tStartTime, tStopTime, tFreq, tSamples)
-    #tDt = int((1.0 / tFreq) * 1e9)  # Target delta time in nanoseconds
-
-    oX = np.arange(oStartTime, oStopTime, 1/oFreq)
-    xnew = np.arange(tStartTime, tStopTime, 1/tFreq)
-
-    print(len(oX), len(arrayIn), len(xnew))
-    print(oX.dtype)
-    print("First and last values", oX[0], oX[-1], xnew[0], xnew[-1])
-    print(arrayIn.shape)
-
-    linInter = interpolate.interp1d(oX, arrayIn, copy=False, fill_value="extrapolate", assume_sorted=True)
-
-    output = linInter(xnew)
-    print(output.shape)
-
-    outarray = np.zeros((numChannels, len(xnew)))
-
-    return output
-
-
-def method1(filePath):
-
-    # Output startint time
-    current_time = datetime.now().strftime("%H:%M:%S.%f")
-    print("Start time =", current_time)
-
-    # ndarray setup - the numpy array dimensions and cols
-    cols = ['x', 'y', 'z']
-    types = ['i2'] * len(cols)  # The 2byte integer layout
-    #  typesOutput = ['f8'] * len(cols)
-    layout = np.dtype({'names': cols, 'formats': types})
-    #  layoutOutput = np.dtype({'names': cols, 'formats': types})
-
-    # Load file directly to ram
-    fp = open(filePath, "rb")
-    memmap = memoryview(fp.read())
-    fp.close()
-
-    fileSize = len(memmap)
-    print("File size", fileSize)
-
-    headerOffset = 1024
-    sectorSize = 512
-    samplesPerSector = 80
-
-    sectors = (fileSize - headerOffset) // sectorSize
-    samples = sectors * samplesPerSector
-    print("Samples=",samples)
-
-    op = 1 #  Number of times to BRUTE force -> simulate a massive file
-    masterArray = np.zeros((samples*op, ), dtype=layout)
-
-    for i in range(sectors*op):
-        imp = np.frombuffer(memmap[headerOffset + i//op * sectorSize : headerOffset + ((i//op)+1) * sectorSize - 2], offset=30, dtype=layout)
-        masterArray[i * samplesPerSector : (i+1) * samplesPerSector] = imp
-
-    memmap.release()
-    #print(len(masterArray['x']))
-    #print(masterArray['y'][0:160] / 2048.0)
-
-    f = open(filePath + ".bin", 'wb')
-
-    numChannels = 3
-
-    for i in range(numChannels):
-        f.write((masterArray[cols[i]] / 2048.0).tobytes())
-
-    f.close()
-
-    current_time = datetime.now().strftime("%H:%M:%S.%f")
-    print("End time =", current_time)
-
-    #print(len(imp))
-
-    #
-    #print(imp['data'])
-
-    #restruct = rfn.unstructured_to_structured(arr, layout, copy=False)
-    #print(restruct)
-
-    #doubles = np.float_(restruct['x'] / 2040)
-
-    #print(doubles)
-
-    #arr = np.array([(1, 3, 4), (3, 2, 4)], dtype=layout)
-
-    #print(arr)
-    #print(arr['x'])

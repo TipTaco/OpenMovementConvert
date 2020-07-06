@@ -1,10 +1,8 @@
 # Author Adrian Shedley
 
-import rapidCWA as rCWA
 import time
 import numpy as np
 import rInterpolate
-import matplotlib.pyplot as plt
 
 # Code goes here
 
@@ -47,6 +45,3 @@ V = rInterpolate.interp1d(y, 0, 1000, 100, 900, 1.9)
 print(y[0].max())
 print(V[0].max())
 
-plt.plot(x, y[0])
-plt.plot(np.arange(100, 900.001, 1.9), V[0])
-plt.show()
