@@ -149,7 +149,9 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
     elif dataWidth == 2:
         exportFormat = 2
 
-    print("Export format =", exportFormat)
+    expDescription = ['8 Byte', '4 Byte', '2 Byte']
+
+    print("Export format =", expDescription[exportFormat])
 
     # Internal head offset
     startChannelHeader = 0
@@ -192,7 +194,6 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
         startTime = seconds_to_BIN_time(channel.startTime)
 
         ch += pack("H", i)    # Short     Channel location in catman database (0, 1, 2, ...)
-        print(chanSamples)
         ch += pack("L", chanSamples)   # Int       Samples = Number of samples in this channel
         ch += pack_string(chanName)  # Short     Channel name length
         # L Bytes   Channel name
@@ -265,7 +266,7 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
         ch += pack("14s", str(chanDevId).encode("UTF-8"))   # TID As String * 16
 
         # Append this channel header to all the channel headers
-        print('Channel', i, 'has header of size', len(ch))
+        #print('Channel', i, 'has header of size', len(ch))
         chanOffset.append(len(ch))
         channelHeaders += ch
 
@@ -273,25 +274,25 @@ def generate_BIN(testName, testComment, channelInfos, dataWidth):
     fullheaderLength = len(header) + len(channelHeaders)
     header[2:6] = pack("L", fullheaderLength)
 
-    print("Header is ", len(header))
-    print(chanOffset)
+    #print("Header is ", len(header))
+    #print(chanOffset)
 
     lastOffset = len(header) + 2
     # Update the reference to the channel header in the header
     for i in range(numChannels):
-        print('Chan offset', i, chanOffset[i])
+        #print('Chan offset', i, chanOffset[i])
         if i >= 1:
             lastOffset += chanOffset[i-1]
-            print("Packing", lastOffset)
+            #print("Packing", lastOffset)
             header[startChannelHeader + 4 * i : startChannelHeader + 4 * (i + 1)] = pack("L", lastOffset)  # Int       Offset for length of channel i
         else:
-            print("Packing first", lastOffset)
+            #print("Packing first", lastOffset)
             header[startChannelHeader + 4 * i : startChannelHeader + 4 * (i + 1)] = pack("L", lastOffset)  # Int       Offset for length of channel i
 
     return (header, channelHeaders)
 
 # A function to take the data block created by the CWA convert and write the equivalent to a .BIN file
-def bin_write_header(data):
+'''def bin_write_header(data):
     header = bytearray()
     print(data['file']['name'])
 
@@ -462,7 +463,8 @@ def bin_write_header(data):
     #f.write("DATAFILE=" + binFilePath + ".BIN")
     #f.close()
 
-    return (header, channelHeaders)
+    return (header, channelHeaders)'''
+
 
 def seconds_to_BIN_time(seconds: float):
     """Input decimal seconds since the UNIX epoch 1970-Jan-01 00:00:00
@@ -476,12 +478,4 @@ def seconds_to_BIN_time(seconds: float):
     outputTime = float(newOLE2_time + unixEpochInOLE2)
 
     return outputTime
-
-
-    # 4676266870090211826 is 1584104203.000 in unixtime
-
-
-
-
-
 

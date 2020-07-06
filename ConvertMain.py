@@ -33,63 +33,18 @@ RESAMPLE: bool = True
 RESAMPLE_FREQ: float = 800.0
 OUTPUT_DATA_WIDTH: int = 4
 
-def main():
-    """ Main function decl. This will be the position in file that is run to start with.
 
-        First a selection of openMovement .cwa files are selcted by the user,
-        Then an output file name (.tst) is specified.
-        The channels are then computed and concatenated. """
+def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ,
+                          multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0,
+                          demoRun = False, byteWidth=OUTPUT_DATA_WIDTH, getFreq=False):
+    """ Operates on many loggers
+    Each physical logger has three (or more) accelerometer channels and as such will command THREE channels in the output
+    @:param
+        listLoggerFiles - Required : the .cwa logger files to be converted
+        outputFile      - Required : the output file path with no extension
 
-    # get the user to specify at least one .cwa file
-    cwaInputPaths = open_multiple_files()
-    if len(cwaInputPaths) == 0:
-        print("Error, terminating, no files selected")
-        return
-
-    # temp
-    for loggerFile in cwaInputPaths:
-        datablock = CWA.cwa_info(loggerFile, extract=True)
-        print(datablock)
-
-    # Get the user to specify at least one output file
-    binOutputPath = save_file_name()
-    if binOutputPath == "":
-        print("Error, terminating")
-        return
-
-    # Run the conversion, first on the header, then on the files
-    compute_multi_channel(cwaInputPaths, binOutputPath)
-
-
-def open_multiple_files():
-    """ Open a user dialog to get multiple file inputs """
-    # List of filenames
-    filePaths = []
-
-    # File open stuff
-    root = tk.Tk()
-    root.withdraw()
-
-    # Ask the user to select one or more files with the right type
-    files = filedialog.askopenfiles(filetypes=[("CWA files", ".cwa")])
-    for file in files:
-        filePaths.append(file.name)  # Take the name of the file, and save it
-        file.close() # Close the file stream
-
-    return filePaths
-
-def save_file_name():
-    # File open stuff
-    root = tk.Tk()
-    root.withdraw()
-
-    # Ask the user to specify a save file name
-    file = filedialog.asksaveasfilename(filetypes=[("TST files", ".tst")])
-    return file
-
-def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ, multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0, demoRun = False, byteWidth=OUTPUT_DATA_WIDTH, getFreq=False):
-    """ Operates on many
-    Each physical logger has three accelerometer axis and as such will command THREE channels
+        demoRun = if the function will calculate only the resample range and then exit
+        getFreq = if the function will calculate only the average sampling frequency of loggers and exit
     """
     # Order the logger files in numerical Order
     freeze_support()
@@ -121,17 +76,14 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         update_dictionary(loggerPath, loggerData['last']['timestamp'], stopTime)
         update_dictionary(loggerPath, loggerData['first']['channels'], channels)
 
-        # The the stats of the loggers (min max, start, end)
-        #print(loggerData)
-
     #summary = {"sampels":samples, "rate":rate, "channels":channels, "startTime":startTime, "stopTime":stopTime}
 
     # Perform checks and conditions to eliminate loggers who fall outside the appropriate range (Unused)
-    if logger_out_of_range(10000, samples): print("Samples out of range", samples)
-    if logger_out_of_range(20, rate): print("Samlping freq. out of range", rate)
-    if logger_out_of_range(10000, startTime): print("start time out of range", startTime)
-    if logger_out_of_range(10000, stopTime): print("End time out of range", stopTime)
-    if logger_out_of_range(1, stopTime): print("End time out of range", channels)
+    if logger_out_of_range(10000, samples): print("[WARN]: Logger has samples out of range", samples)
+    if logger_out_of_range(20, rate): print("[WARN]: Logger has samlping freq. out of range", rate)
+    if logger_out_of_range(10000, startTime): print("[WARN]: Logger has start time out of range", startTime)
+    if logger_out_of_range(10000, stopTime): print("[WARN]: Logger has end time out of range (>10000)", stopTime)
+    if logger_out_of_range(1, stopTime): print("[WARN]: Logger has end time out of range (<1)", channels)
 
     # Quick and nasty way to get the rate of all the loggers, Next version should abstract out this code
     if getFreq:
@@ -140,15 +92,11 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     # Get resample ranges
     (rzStart, rzStop, rzSamples) = Resampler.get_range(startTime, stopTime, resampleFreq, trimStart, trimEnd)
 
-    if (demoRun):
+    # Return this function early if the GUI requires a trim time only
+    if demoRun:
         return (rzStart, rzStop, rzSamples, rate)
 
     # Now generate the BIN header file for all the good (in range) loggers
-    ##TODO eliminate bad or out of range loggers
-    # Number of channels, 1 for each accel axis in each logger
-    numChannels = len(listLoggerFiles) * int(channels['max'])
-    numsamples = samples['min']
-
     # Write each of the channels into the channel list (for the BIN headers)
     axis = ['X', 'Y', 'Z']  # Update this if the logger has more than 3 channels to extract
     if channels['max'] == 6: axis = ["Ax", "Ay", "Az", "Gx", "Gy", "Gz"]
@@ -188,7 +136,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     base = os.path.splitext(base)[0]
     dirname = os.path.dirname(outputFile)
 
-    comment = "Resampling "
+    comment = "Linear Resampling "
     if resample:
         comment += "on at " + str(resampleFreq) + "Hz"
     else: comment += "off."
@@ -206,7 +154,6 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     f.close()
 
     # Multithreading disabled for now - Dropping in rapidCWA methods
-
     startTimeT = time.time()
 
     # New and improved reading, resampling and output
@@ -231,7 +178,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
 
     # Relay to the user how long the execution for all files took.
     deltaT = time.time() - startTimeT
-    print("Completed in", round(deltaT, 2), "s")
+    print("\nCompleted in", round(deltaT, 2), "s")
 
     # Write out the .TST file for catman to read. This file is only a pointer to the .BIN and is for the user.
     if resample:
@@ -244,7 +191,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
 
 
 def update_dictionary(logger, stat, dict):
-
+    """Update the logger dictionary for the given statistic"""
     count = dict['average'] * dict['numLoggers']
     numLoggers = dict['numLoggers'] + 1
 
@@ -261,92 +208,13 @@ def update_dictionary(logger, stat, dict):
         dict['minLogger'] = logger
 
 
-""" A function to return if one of the values for all the loggers is out of bounds"""
 def logger_out_of_range(absDiffLimit, dictionary):
+    """ A function to return if one of the values for all the loggers is out of bounds"""
     diff = max((dictionary['max'] - dictionary['average']), (dictionary['average'] - dictionary['min']))
     if diff > absDiffLimit:
         return True
     else:
         return False
-
-
-def get_logger_data(inParam: []):
-    logger = inParam[0]
-    filePath = inParam[1]
-    loggerOutputOffset = inParam[2]
-    convertTask:Multithread.Task = inParam[7]
-
-    # Data Chunks
-    sectorSize = 512
-    headerSize = 1024
-    # Exctract logger variables
-    filename = logger['filePath']
-    numSamples = logger['file']['numSamples']
-    numSectors = logger['file']['numSectors']
-    samplesPerSector = logger['file']['samplesPerSector']
-    accelUnit = int(logger['first']['accelUnit'])
-    numChannels = int(logger['first']['channels'])
-
-    # Open file and offset header
-    file = open(filename, "rb")
-    file.seek(0, 2)
-    fileSize = file.tell()
-    file.seek(headerSize)
-    chunkSize = 100  # Number of sectors to read
-    headerOffset = headerSize
-
-    numSectors = 0
-    if fileSize >= headerSize:
-        numSectors = (fileSize - headerSize) // 512
-
-    # Read data sectors and populate as required
-    values = bytearray(numSamples * 8 * numChannels)
-    v2mem = memoryview(values)
-    chunk = bytearray()
-
-    for sector in range(numSectors):
-        if sector % chunkSize == 0:
-            chunk = file.read(sectorSize * chunkSize)  # Read x sectors from file
-
-        chunkOffset = sectorSize * (sector % chunkSize)
-
-        dataSector = CWA.cwa_data(chunk[chunkOffset : chunkOffset + sectorSize], extractData=True)
-
-        if (sector % (numSectors // 25) == 0):
-            print("Logger", logger['header']['deviceId'], "at", round(100.0 * sector/numSectors, 1), "%")
-            #Multithread.update_ID(convertTask.taskID, round(100.0*sector/numSectors))
-
-        sectorOffset = sector * samplesPerSector * 8
-
-        toBeResampled = [[0] * samplesPerSector for i in range(numChannels)]
-
-        # For each of the channels and each of the samples
-        for chan in range(numChannels):
-            for sample in range(samplesPerSector):
-                startOffset = sectorOffset + chan * 8 * numSamples + sample * 8
-                # Get data back from the file either accels, gyros or mag channels
-                if (numChannels == 3):
-                    v2mem[startOffset : startOffset + 8] = pack('d', dataSector['samplesAccel'][sample][chan])
-                elif (numChannels > 3):
-                    if (chan < 3):
-                        v2mem[startOffset: startOffset + 8] = pack('d', dataSector['samplesAccel'][sample][chan])
-                    elif (chan < 6):
-                        v2mem[startOffset : startOffset + 8] = pack('d', dataSector['samplesGyro'][sample][chan-3])
-                    elif (chan < 9):
-                        v2mem[startOffset : startOffset + 8] = pack('d', dataSector['samplesMag'][sample][chan-6])
-
-
-
-    # Write out this contiguous block to the file, for the nChannels on this logger
-    print("Writing channel data for file", filePath)
-    f = open(filePath, "rb+")
-    f.seek(loggerOutputOffset)
-    f.write(values)
-    f.flush()
-    f.close()
-
-    print("Completed", filename)
-    return 0
 
 
 def write_tst_convert(filePath, channel_list):
@@ -364,6 +232,7 @@ def write_tst_convert(filePath, channel_list):
     f.write("DATAFILE=" + str(filePath) + ".BIN")
     f.close()
 
+
 def write_tst_resampled(filePath, channel_list):
     """ Write a test file for the resampled data, everything's start and stop and sample count is the same"""
     f = open(filePath + ".TST", "w")
@@ -378,13 +247,3 @@ def write_tst_resampled(filePath, channel_list):
 
     f.write("DATAFILE=" + str(filePath) + ".BIN")
     f.close()
-
-def read_file_to_mem(filepath):
-    f = open(filepath, "rb")
-    fileBytes = f.read()
-    f.close()
-    return memoryview(fileBytes)
-
-
-if __name__ == "__main__":
-    main()
