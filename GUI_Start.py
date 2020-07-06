@@ -17,7 +17,7 @@ import threading
 from multiprocessing import freeze_support
 
 PROCESS: str = 'CWA_to_BIN'
-VERSION: str = 'v0.8'
+VERSION: str = 'v0.9'
 
 class ProgressForm():
     def __init__(self):
