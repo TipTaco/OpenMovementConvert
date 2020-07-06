@@ -6,7 +6,7 @@
 
 import numpy as np
 from datetime import datetime
-
+import ProgressPrinter as pbar
 # Layout
 # 1) Load file
 # 2) File is read into memory
@@ -15,7 +15,7 @@ from datetime import datetime
 def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
     """ Reads all the data from a logger and returns a numpy array object"""
     current_time = datetime.now().strftime("%H:%M:%S")
-    print("Reading ", filePath, "(", current_time, ")")
+    print("Read", filePath, "(", current_time, ")")
 
     headerOffset = 1024
     sectorSize = 512
@@ -35,8 +35,11 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
     masterArray = np.zeros((samples, ), dtype=layout)
 
     for i in range(sectors):
-        if i % (sectors // 4) == 0:
-            print("Read ", round(100.0 * i / sectors, 1), "% complete")
+        #if i % (sectors // 4) == 0:
+            #print("Read ", round(100.0 * i / sectors, 1), "% complete")
+            #print(i/(sectors // 100))
+        if i % (sectors // 100) == 0:
+            pbar.printProgressBar(round((100.0 * i)/sectors, 0), 100, prefix="Read File", printEnd=" ")
 
         imp = np.frombuffer(memmap[headerOffset + i * sectorSize : headerOffset + (i+1) * sectorSize - 2], offset=30, dtype=layout)
         masterArray[i * samplesPerSector : (i+1) * samplesPerSector] = imp
@@ -44,7 +47,7 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
     memmap.release()
 
     current_time = datetime.now().strftime("%H:%M:%S")
-    print("Read Complete.(", current_time, ")")
+    print("Read Complete. (", current_time, ")")
     return masterArray.view(np.int16).reshape(masterArray.shape + (-1,)).transpose().astype(np.float32, casting='safe')
 
 def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
@@ -63,7 +66,7 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
 
 
     current_time = datetime.now().strftime("%H:%M:%S")
-    print("Channel Writing start (", current_time, ")")
+    print("Write Channel Start. (", current_time, ")")
 
     if not filePath.endswith(".bin"):
         filePath += ".bin"
@@ -104,7 +107,8 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             fp.write(((arrayIn[i] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
         else:
             fp.write((arrayIn[i]/ iScale).astype(type).tobytes())
-        print("Logger Channel", cols[i], "written")
+        #print("Logger Channel", cols[i], "written")
+        pbar.printProgressBar((100.0 / numChannels) * (i + 1), 100, prefix="Write File", printEnd=" ")
 
     lastPos = fp.tell()
     fp.close()

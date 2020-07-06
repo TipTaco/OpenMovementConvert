@@ -84,10 +84,10 @@ def get_range(min_max_start, min_max_stop, freq, trimStart, trimEnd):
     """Returns the tuple of values
             (resampleStart, resampleStop, numSamples)"""
 
-    marginSeconds = 0 # (1.0 / freq) * 0.1
+    marginSeconds = 0.25 # (1.0 / freq) * 0.1
 
     # Calculate the trim on either end of the smallest range of samples for all loggers
-    realStart = min_max_start["max"] + marginSeconds + max(trimStart, 0)
+    realStart = min_max_start["max"] + max(trimStart, 0)
     realStop = min_max_stop["min"] - marginSeconds - max(trimEnd, 0)
 
     duration = realStop - realStart

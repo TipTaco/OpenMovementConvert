@@ -24,6 +24,8 @@ import Resampler as Resampler
 import Multithread as Multithread
 from datetime import datetime
 
+import ProgressPrinter as pbar
+
 # Global Vars
 NUM_THREADS: int = 4
 MULTITHREAD: bool = True
@@ -161,20 +163,20 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         sessionId = str(logger['header']['sessionId'])
         sampleRate = str(logger['file']['meanRate'])
         numSamples = logger['file']['numSamples']
-        startTime = logger['first']['timestamp']
+        beginTime = logger['first']['timestamp']
         endTime = logger['last']['timestamp']
         numChannelsPerLogger = channels['max']
 
         if resample:
             sampleRate = resampleFreq
             numSamples = rzSamples
-            startTime = rzStart
-            stopTime = rzStop
+            beginTime = rzStart
+            endTime = rzStop
 
         # generate a Channel object for each channel
         for i in range(numChannelsPerLogger):
             channelName = loggerId + "_" + sessionId + "_" + axis[i]
-            channel_object = BIN.Channel(loggerPath, channelName, "[no comment]", loggerId, sessionId, numSamples, sampleRate, startTime, stopTime)
+            channel_object = BIN.Channel(loggerPath, channelName, "[no comment]", loggerId, sessionId, numSamples, sampleRate, beginTime, endTime)
             channel_list.append(channel_object)
 
         # When writing out the data file, need to know exact position of data (either scaled or not)
@@ -205,15 +207,16 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
 
     # Multithreading disabled for now - Dropping in rapidCWA methods
 
-    startTime = time.time()
+    startTimeT = time.time()
 
+    # New and improved reading, resampling and output
     for i, logger in enumerate(loggers):
         fp = logger['filePath']
         print("")  # Blank Display Line
         # Read the data only for this logger to array. This array will then be used to either resample or convert direct
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
 
-        print("Read from logger:", masterArray.shape[0], "channels with", masterArray.shape[1], "samples each.")
+        print(" Loaded ", masterArray.shape[0], " channels.", masterArray.shape[1], "samples each.")
 
         # If the resample option was selected, first resample the data before outputting it to the file
         if resample:
@@ -224,10 +227,11 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
 
         # Output the data for this logger to file and save the last position in file
         lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos, sizeBytes=byteWidth, cols=axis)
+        if len(loggers) > 1: print("\n COMPLETED", (i+1), "OF", len(loggers), "FILES")
 
     # Relay to the user how long the execution for all files took.
-    deltaT = time.time() - startTime
-    print("\n Completed in", round(deltaT, 2), "s")
+    deltaT = time.time() - startTimeT
+    print("Completed in", round(deltaT, 2), "s")
 
     # Write out the .TST file for catman to read. This file is only a pointer to the .BIN and is for the user.
     if resample:
@@ -235,8 +239,8 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     else:
         write_tst_convert(dirname + "/" + base, channel_list)
 
-    print("\nSave Completed to", dirname + "/" + base + ".tst")
-    print("( These windows may now be closed )")
+    print("\nSaved to", dirname + "/" + base + ".TST")
+    print(" These windows may now be closed. ")
 
 
 def update_dictionary(logger, stat, dict):

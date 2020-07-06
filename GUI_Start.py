@@ -71,6 +71,7 @@ class PrefForm():
         self.multithread: bool = False
         self.numThreads: int = 4
         self.byteWidth: int = 8
+        # self.progress = tk.IntVar(self.root).set(0)
 
         self.loggerFrequency: float = 800.0
 
@@ -80,6 +81,8 @@ class PrefForm():
         # make the two content frames
         self.topFrame = tk.Frame(self.masterFrame)
         self.topFrame.pack(fill=tk.BOTH, expand=True, side=tk.TOP)
+        self.b4 = tk.Frame(self.masterFrame)
+        self.b4.pack(side=tk.BOTTOM, expand=True, fill=tk.X)
         self.b3 = tk.Frame(self.masterFrame)
         self.b3.pack(side=tk.BOTTOM, expand=True, fill=tk.X)
         self.bottomFrame = tk.Frame(self.masterFrame)
@@ -212,6 +215,9 @@ class PrefForm():
         self.statusText = tk.Label(self.b3, text="Ready", justify=tk.LEFT)
         self.statusText.pack(anchor=tk.NW, fill=tk.X, expand=True)
 
+        # self.progressbar = ttk.Progressbar(self.b4, variable=self.progress)
+        # self.progressbar.pack(anchor=tk.NW, fill=tk.X, expand=True)
+
         self.root.mainloop()
 
     def byteSelect(self, dummy):
@@ -322,7 +328,7 @@ class PrefForm():
         numThreads = 1 # int(self.paraCores.get())  DISABLED
 
         self.thread1 = threading.Thread(target=ConvertMain.compute_multi_channel, args=(self.filePaths, self.saveName, self.resample, resampleFreq,
-                                          self.multithread, numThreads, trimStart, trimEnd, False, self.byteWidth))
+                                          self.multithread, numThreads, trimStart, trimEnd, False, self.byteWidth, False))
         self.thread1.start()
 
         #time.sleep(1)
@@ -333,11 +339,9 @@ class PrefForm():
     def quit(self):
         self.root.destroy()
 
-
 def main():
     freeze_support()
-    getpref = PrefForm()
-
+    form = PrefForm()
 
 if __name__ == "__main__":
     main()

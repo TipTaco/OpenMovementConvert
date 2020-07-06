@@ -5,6 +5,7 @@
 # Last modified 6 July 2020
 
 import numpy as np
+import ProgressPrinter as pbar
 
 def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='linear', fill_value=0):
 
@@ -27,7 +28,8 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
         # print("Input stats:", startVal, endVal, inputDelta, y.shape)
         # print("Output stats:", startInterp, endInterp, outputDelta, outputSamples)
 
-        print("Begin Resample")
+        print("Linear Resample Start.")
+        # pbar.printProgressBar(5, 100, prefix="Resample", printEnd=" ")
 
         # We have an input time sampled data set starting at startVal seconds, ending at endVal seconds with inputDelta
         #       seconds between samples
@@ -43,7 +45,8 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
         #   Shape = (N)
         outSeq = np.linspace(startInterp - startVal, endInterp - startVal, outputSamples) / inputDelta
         outSeq[outSeq >= y.shape[1]] = y.shape[1] - 2
-        print("Resample output defined")
+        print("Linear Resample output defined.")
+        # pbar.printProgressBar(10, 100, prefix="Resample", printEnd=" ")
 
         # Get the whole integer index of the input sample for this linear interpolation
         #
@@ -61,14 +64,18 @@ def interp1d(y, startVal, endVal, startInterp, endInterp, equispacing, kind='lin
         B = np.subtract(outSeq, lo)
         del outSeq
 
-        print("Resample subvalues computed")
+        print(" ... Resampling in progress. This may take 5 to 60 seconds ...\r")
+        #pbar.printProgressBar(15, 100, prefix="Resample", printEnd=" ")
 
         # Interpolation calculation
         V = B * (y[:,(lo + 1)] - y[:,lo]) + y[:,lo]
 
+        #pbar.printProgressBar(95, 100, prefix="Resample", printEnd=" ")
+
         del lo
         del B
 
-        print("Resample Complete")
+        #pbar.printProgressBar(100, 100, prefix="Resample", printEnd=" ")
+        print("Linear Resample Complete.")
 
         return V
