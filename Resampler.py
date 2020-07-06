@@ -86,14 +86,12 @@ def get_range(min_max_start, min_max_stop, freq, trimStart, trimEnd):
 
     marginSeconds = 0 # (1.0 / freq) * 0.1
 
+    # Calculate the trim on either end of the smallest range of samples for all loggers
     realStart = min_max_start["max"] + marginSeconds + max(trimStart, 0)
     realStop = min_max_stop["min"] - marginSeconds - max(trimEnd, 0)
 
     duration = realStop - realStart
-
-    # print(marginSeconds, realStart, realStop, duration)
-
-    if (duration) <= 0: print("Error: resample interval less than 0")
+    if duration <= 0: print("Error: resample interval less than 0")
 
     # Whole integer number of samples
     numSamples = int(duration * freq) + 1

@@ -131,6 +131,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     if logger_out_of_range(10000, stopTime): print("End time out of range", stopTime)
     if logger_out_of_range(1, stopTime): print("End time out of range", channels)
 
+    # Quick and nasty way to get the rate of all the loggers, Next version should abstract out this code
     if getFreq:
         return (0, 0, 0, rate)
 
@@ -164,7 +165,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         endTime = logger['last']['timestamp']
         numChannelsPerLogger = channels['max']
 
-        if (resample):
+        if resample:
             sampleRate = resampleFreq
             numSamples = rzSamples
             startTime = rzStart
@@ -173,13 +174,12 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         # generate a Channel object for each channel
         for i in range(numChannelsPerLogger):
             channelName = loggerId + "_" + sessionId + "_" + axis[i]
-            channel_object = BIN.Channel(loggerPath, channelName, "[no comment]", loggerId, sessionId, numSamples, sampleRate, startTime, endTime)
+            channel_object = BIN.Channel(loggerPath, channelName, "[no comment]", loggerId, sessionId, numSamples, sampleRate, startTime, stopTime)
             channel_list.append(channel_object)
 
         # When writing out the data file, need to know exact position of data (either scaled or not)
         extras = 0 if byteWidth != 2 else 16
         loggerOffsets.append(loggerOffsets[-1] + numSamples * numChannelsPerLogger * byteWidth + extras)
-        #print("last offset", loggerOffsets[-1])
 
     # Manipulate file paths
     base = os.path.basename(outputFile)

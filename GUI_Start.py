@@ -16,6 +16,9 @@ import os
 import threading
 from multiprocessing import freeze_support
 
+PROCESS: str = 'CWA_to_BIN'
+VERSION: str = 'v0.8'
+
 class ProgressForm():
     def __init__(self):
         self.root = tk.Tk()
@@ -59,7 +62,8 @@ class PrefForm():
         self.saveName: str = ""
 
         self.root = tk.Tk()
-        self.root.title('Conversion Preferences form')
+        title = PROCESS + " " + VERSION
+        self.root.title(title + ' - Conversion Preferences form')
         #self.root.geometry("500x450")
 
         self.resample: bool = False
