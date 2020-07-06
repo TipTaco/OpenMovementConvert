@@ -180,9 +180,9 @@ class PrefForm():
 
         # Instead place the byte width selector here
         self.outputDesc = tk.Label(self.t6, text="Catman Ouput File (.BIN) format: \n" +
-                                                 "  8 Byte Spacing (Full size)     4GB output 🡒 1GB input\n" +
-                                                 "  4 Byte Spacing (Half Size)     2GB output 🡒 1GB input\n" +
-                                                 "  2 Byte Spacing (Quater Size)   1GB output 🡒 1GB input (May take 10% longer to generate)",
+                                                 "  8 Byte Spacing (Full size)     4GB output = 1GB input\n" +
+                                                 "  4 Byte Spacing (Half Size)     2GB output = 1GB input\n" +
+                                                 "  2 Byte Spacing (Quater Size)   1GB output = 1GB input (May take 20% longer to generate)",
                                    fg="blue", justify=tk.LEFT)
         self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=5)
 
