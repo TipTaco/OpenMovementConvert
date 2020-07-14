@@ -5,6 +5,7 @@
 # Last Modified 6 July 2020 - Performance tweaks as well as linear interpolation method added.
 
 import cwa_metadata as CWA   # cwa file type converter
+import rFilter
 import rapidCWA as rCWA  # Rapid cwa file loader
 import rInterpolate as rInter  # Rapid interpolator
 import bin_data as BIN  # bin file type converter
@@ -167,7 +168,15 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
             startVal = float(logger['first']['timestamp'])
             endVal = float(logger['last']['timestamp'])
             # Update the array in overwrite mode to contain the new resampled data
-            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
+            original_freq = float(logger['file']['meanRate'])
+            filter_freq = resampleFreq / 2
+            print("filtering from", original_freq, 'to', filter_freq)
+            print(masterArray.nbytes/1000000)
+            masterArray1 = rFilter.lowpass_filter(masterArray, in_freq=original_freq, cutoff_freq=50.0)
+            print(masterArray1.nbytes/1000000)
+            masterArray2 = rInter.interp1d(masterArray1, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
+            print(masterArray2.nbytes/1000000)
+            masterArray = masterArray2
 
         # Output the data for this logger to file and save the last position in file
         lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos, sizeBytes=byteWidth, cols=axis)

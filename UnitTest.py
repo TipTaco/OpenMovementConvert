@@ -6,6 +6,11 @@ from tkinter import ttk
 
 import numpy as np
 import rInterpolate
+import rFilter
+
+from matplotlib import pyplot as plt
+import scipy.fftpack
+from scipy.signal import firwin
 
 # Code goes here
 
@@ -18,7 +23,51 @@ dummy['first']['samplesPerSector'] = 80
 
 startTime = time.time()
 
-# Tk scrollbar example
+N = 1000
+f = 800.0
+T = 1/f
+
+x = np.linspace(0.0, N*T, N)
+y = np.sin(50.0 * 2 * np.pi * (x**5)).reshape(1, N)
+
+print(x.shape)
+print(y.shape)
+
+x_fft = np.linspace(0.0, 1.0/(2.0*T), N//2)
+
+
+filtered = rFilter.lowpass_filter(y, order=80, in_freq=800.0, cutoff_freq=400.0)
+
+y_fft = scipy.fftpack.fft(y[0])
+filtered_fft = scipy.fftpack.fft(filtered[0])
+
+plt.figure(1)
+ax1 = plt.subplot(211)
+ax1.plot(x, y[0])
+ax1.plot(x, filtered[0])
+ax1.set_title('Signals')
+ax2 = plt.subplot(212)
+ax2.plot(x_fft, 20 * np.log10(2.0/N * np.abs(y_fft[:N//2])))
+ax2.plot(x_fft, 20 * np.log10(2.0/N * np.abs(filtered_fft[:N//2])))
+ax2.set_title('FFT')
+plt.show()
+
+
+# Freq response part
+nf = 100.0
+lowp = (nf / (f/2)) * 0.98
+
+b = firwin(81, lowp, window='hamming' , pass_zero='lowpass')
+w, h = scipy.signal.freqz(b)
+
+plt.figure(2)
+plt.title("Filter freq response")
+plt.plot(w, 20 * np.log10(abs(h)), 'b')
+plt.ylabel('Amplitude [dB]', color='b')
+plt.xlabel('Frequency [rad/sample]')
+plt.show()
+
+'''# Tk scrollbar example
 parent = tk.Tk()
 
 canvas = tk.Canvas(parent)
@@ -26,7 +75,6 @@ scroll_y = tk.Scrollbar(parent, orient="vertical", command=canvas.yview)
 
 frame = tk.Frame(canvas)
 # group of widgets
-
 
 
 for i in range(20):
@@ -44,7 +92,7 @@ canvas.configure(scrollregion=canvas.bbox('all'),
 canvas.pack(fill='both', expand=True, side='left')
 scroll_y.pack(fill='y', side='right')
 
-parent.mainloop()
+parent.mainloop()'''
 
 
 
