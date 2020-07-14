@@ -252,7 +252,7 @@ class PrefForm():
         elif float(rate['average']) == 0.0:
             loggerDispFreq = "No loggers Selected! ---"
         else:
-            self.loggerFrequency = (round(float(rate['average']) / 100.0, 0) * 100) / 1.0
+            self.loggerFrequency = (round(float(rate['average']) / 100.0, 0) * 100) / 4.0
             loggerDispFreq = str(self.loggerFrequency)
 
         self.frequencyText.set(loggerDispFreq)

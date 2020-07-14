@@ -5,25 +5,25 @@
 import numpy as np
 
 # import scipy as sp
-from scipy.signal import firwin
-from scipy.signal import oaconvolve
+from scipy.signal import firwin, butter
+from scipy.signal import filtfilt
 
 
-def fir_lowpass(order, cutoff_freq_percent=0.98):
-    return firwin(order+1, cutoff_freq_percent, window='hamming', pass_zero='lowpass')
+def butter_lowpass(order, cutoff_freq):
+    return butter(order, Wn=cutoff_freq, btype='lowpass', analog=False, output='ba')
 
 
-def lowpass_filter(data, order=80, in_freq=800.0, cutoff_freq=100.0):
-    offset_freq = ((8/order) * cutoff_freq) / 2.0
+def lowpass_filter(data, order=16, in_freq=800.0, cutoff_freq=100.0):
+
+    offset_freq = (0.1 * cutoff_freq) / 2.0
+
     # Modify the cutoff such that the frequency content is mostly gone by the desired freq
     cutoff_freq -= offset_freq
     lowp_freq = (cutoff_freq / (in_freq/2)) * 0.98
-    b = fir_lowpass(order, lowp_freq)
+    b = butter_lowpass(order, lowp_freq)
 
-    print("b", b)
-    print("b mod",  b[np.newaxis, :])
-
-    return oaconvolve(data, b[np.newaxis, :], mode='same') # Faster convolve
+    # Perform the filtering using Scipy, expensive operation
+    return filtfilt(b[0], b[1], data)
 
 
 

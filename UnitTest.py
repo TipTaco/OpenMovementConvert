@@ -5,6 +5,8 @@ import tkinter as tk
 from tkinter import ttk
 
 import numpy as np
+
+import rIntegrate
 import rInterpolate
 import rFilter
 
@@ -36,7 +38,7 @@ print(y.shape)
 x_fft = np.linspace(0.0, 1.0/(2.0*T), N//2)
 
 
-filtered = rFilter.lowpass_filter(y, order=80, in_freq=800.0, cutoff_freq=400.0)
+filtered = rFilter.lowpass_filter(y, order=16, in_freq=800.0, cutoff_freq=100.0)
 
 y_fft = scipy.fftpack.fft(y[0])
 filtered_fft = scipy.fftpack.fft(filtered[0])
