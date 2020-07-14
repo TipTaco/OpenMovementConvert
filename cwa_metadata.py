@@ -2,11 +2,9 @@
 #
 
 import sys
-from struct import *
-import time
+import os.path
+from struct import unpack
 from datetime import datetime, timezone
-import os
-import json
 
 def read_timestamp(data):
     value = unpack('<I', data)[0]
