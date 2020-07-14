@@ -8,7 +8,7 @@ from tkinter import filedialog
 import ConvertMain
 import cwa_metadata as CWA
 
-import os
+import os.path
 import threading
 from multiprocessing import freeze_support
 
@@ -100,6 +100,9 @@ class PrefForm():
         state = tk.NORMAL if self.resample else tk.DISABLED
         self.frequencyText = tk.StringVar()
         self.frequencyText.set('---')
+        self.resampleText = tk.Label(self.t3, justify=tk.LEFT, fg='blue', text="Resampler / Downsampler: \n" +
+                                                                    "  Resampling or downsampling with filtering applied at FREQUENCY / 2 to avoid aliasing")
+        self.resampleText.pack(anchor=tk.NW, side = tk.TOP, pady = 5, padx =5)
         self.resCheck = tk.Checkbutton(self.t3, width = 22, text="Resample", justify=tk.LEFT, command=self.getLoggerRate)
         self.resCheck.pack(anchor=tk.NW, side = tk.LEFT, pady = 5, padx =5)
         self.resFreq = tk.Label(self.t3, textvariable=self.frequencyText)
@@ -146,10 +149,12 @@ class PrefForm():
         self.paraCores.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)'''
 
         # Instead place the byte width selector here
-        self.outputDesc = tk.Label(self.t6, text="Catman Ouput File (.BIN) format: \n" +
-                                                 "  8 Byte Spacing (Full size)     4GB output = 1GB input\n" +
-                                                 "  4 Byte Spacing (Half Size)     2GB output = 1GB input\n" +
-                                                 "  2 Byte Spacing (Quater Size)   1GB output = 1GB input (May take 20% longer to generate)",
+        self.outputDesc = tk.Label(self.t6, text="Catman Output File (.BIN) format: \n" +
+                                                 "  Recommended: \n" +
+                                                 "    8 Byte Spacing (Full size)     4GB output = 1GB input\n" +
+                                                 "    4 Byte Spacing (Half Size)     2GB output = 1GB input\n" +
+                                                 "  Not Recommended: \n" +
+                                                 "    2 Byte Spacing (Quater Size)   1GB output = 1GB input (May take 20% longer to generate)",
                                    fg="blue", justify=tk.LEFT)
         self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=5)
         # Dropdown to select the number of bytes to put in the output file
@@ -247,7 +252,7 @@ class PrefForm():
         elif float(rate['average']) == 0.0:
             loggerDispFreq = "No loggers Selected! ---"
         else:
-            self.loggerFrequency = round(float(rate['average']) / 100.0, 0) * 100
+            self.loggerFrequency = (round(float(rate['average']) / 100.0, 0) * 100) / 1.0
             loggerDispFreq = str(self.loggerFrequency)
 
         self.frequencyText.set(loggerDispFreq)
@@ -257,6 +262,9 @@ class PrefForm():
             returned after being trimmed in AWST timezone'''
         trimStart = float(eval(self.trimStartInput.get())) * 60.0
         trimEnd = float(eval(self.trimEndInput.get())) * 60.0
+
+        if len(self.filePaths) == 0:
+            return
 
         resampleFreq = self.loggerFrequency
         numThreads = 1 # DISABLED int(self.paraCores.get())

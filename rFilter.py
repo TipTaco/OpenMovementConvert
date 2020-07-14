@@ -4,7 +4,7 @@
 
 import numpy as np
 
-import scipy as sp
+# import scipy as sp
 from scipy.signal import firwin
 from scipy.signal import oaconvolve
 
@@ -19,6 +19,10 @@ def lowpass_filter(data, order=80, in_freq=800.0, cutoff_freq=100.0):
     cutoff_freq -= offset_freq
     lowp_freq = (cutoff_freq / (in_freq/2)) * 0.98
     b = fir_lowpass(order, lowp_freq)
+
+    print("b", b)
+    print("b mod",  b[np.newaxis, :])
+
     return oaconvolve(data, b[np.newaxis, :], mode='same') # Faster convolve
 
 

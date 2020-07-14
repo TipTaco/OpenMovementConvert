@@ -48,7 +48,7 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
 
     current_time = datetime.now().strftime("%H:%M:%S")
     print("Read Complete. (", current_time, ")")
-    return masterArray.view(np.int16).reshape(masterArray.shape + (-1,)).transpose().astype(np.float32, casting='safe')
+    return masterArray.view(np.int16).reshape(masterArray.shape + (-1,)).transpose().astype(np.float64, casting='safe')
 
 def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
 

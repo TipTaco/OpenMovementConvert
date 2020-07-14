@@ -3,6 +3,7 @@
 # Date Created: 20 May 2020
 # Last Modified 1 July 2020 - Modifications to speed up conversion by 40x
 # Last Modified 6 July 2020 - Performance tweaks as well as linear interpolation method added.
+import numpy as np
 
 import cwa_metadata as CWA   # cwa file type converter
 import rFilter
@@ -10,7 +11,7 @@ import rapidCWA as rCWA  # Rapid cwa file loader
 import rInterpolate as rInter  # Rapid interpolator
 import bin_data as BIN  # bin file type converter
 
-import os
+import os.path
 import time
 from multiprocessing import freeze_support
 
@@ -160,7 +161,6 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         print("")  # Blank Display Line
         # Read the data only for this logger to RAM array. This used to either resample or convert direct
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
-
         print(" Loaded ", masterArray.shape[0], " channels.", masterArray.shape[1], "samples each.")
 
         # If the resample option was selected, first resample the data before outputting it to the file
@@ -171,12 +171,11 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
             original_freq = float(logger['file']['meanRate'])
             filter_freq = resampleFreq / 2
             print("filtering from", original_freq, 'to', filter_freq)
-            print(masterArray.nbytes/1000000)
-            masterArray1 = rFilter.lowpass_filter(masterArray, in_freq=original_freq, cutoff_freq=50.0)
-            print(masterArray1.nbytes/1000000)
-            masterArray2 = rInter.interp1d(masterArray1, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
-            print(masterArray2.nbytes/1000000)
-            masterArray = masterArray2
+            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.dtype)
+            masterArray = rFilter.lowpass_filter(masterArray, in_freq=original_freq, cutoff_freq=filter_freq)
+            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.dtype)
+            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
+            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.dtype)
 
         # Output the data for this logger to file and save the last position in file
         lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos, sizeBytes=byteWidth, cols=axis)
