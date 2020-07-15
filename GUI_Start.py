@@ -25,160 +25,169 @@ class PrefForm():
         self.filePaths = []
         self.saveName: str = ""
 
-        self.resample: bool = False
-        self.resampleFreq: float = 800.0
+        self.resample = tk.BooleanVar(value=False)
+        self.resample_freq = tk.DoubleVar(value=800.0)
+
+        self.lowpass = tk.BooleanVar(value=False)
+        self.lowpass_freq = tk.DoubleVar(value=100.0)
+
+        self.integrate = tk.BooleanVar(value=False)
+        self.highpass1_freq = tk.DoubleVar(value=0.0)
+        self.integrate_unit: str = "mm/s"
+        self.highpass2_freq = tk.DoubleVar(value=0.0)
+
         self.multithread: bool = False
         self.numThreads: int = 4
         self.byteWidth: int = 8
-        self.loggerFrequency: float = 800.0
 
         # The main frame for the GUI
-        self.masterFrame = tk.Frame(self.root)
-        self.masterFrame.pack(anchor=tk.NW, fill=tk.BOTH, expand=True, side=tk.TOP, pady=1, padx=1)
+        self.master_frame = tk.Frame(self.root, bg='red')
+        self.master_frame.pack(anchor=tk.NW, fill=tk.BOTH, expand=True, side=tk.TOP, pady=1, padx=1)
+        tk.Grid.columnconfigure(self.root, 0, weight=1)
+        for y in range(1,8):
+            tk.Grid.rowconfigure(self.master_frame, y, weight=1)
 
-        # Make top 't' and bottom 'b' content frames in the correct order
-        # A rewrite would be nice here, but everything was done by hand and works as is for now
-        self.topFrame = tk.Frame(self.masterFrame)
-        self.topFrame.pack(fill=tk.BOTH, expand=True, side=tk.TOP)
-        self.b4 = tk.Frame(self.masterFrame)
-        self.b4.pack(side=tk.BOTTOM, expand=True, fill=tk.X)
-        self.b3 = tk.Frame(self.masterFrame)
-        self.b3.pack(side=tk.BOTTOM, expand=True, fill=tk.X)
-        self.bottomFrame = tk.Frame(self.masterFrame)
-        self.bottomFrame.pack(fill=tk.X, side=tk.BOTTOM)
+        # GUI rewrite
+        self.title_frame = tk.Frame(self.master_frame)
+        self.title_frame.grid(row=0, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        # Each of these tX and bX blocks are a rung on the GUI and separated as such. A grid would work better for this
-        self.t1 = tk.Frame(self.topFrame)
-        self.t1.pack(anchor=tk.NW, side=tk.TOP)
-        self.sep1 = ttk.Separator(self.topFrame)
-        self.sep1.pack(side=tk.TOP, expand=True, fill=tk.X, padx=5, pady=5)
+        self.in_file_frame = tk.Frame(self.master_frame)
+        self.in_file_frame.grid(row=1, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        self.t2 = tk.Frame(self.topFrame)
-        self.t2.pack(anchor=tk.NW, side=tk.TOP, fill=tk.X)
-        self.sep2 = ttk.Separator(self.topFrame)
-        self.sep2.pack(side=tk.TOP, expand=True, fill=tk.X, padx=5, pady=5)
+        self.resample_frame = tk.Frame(self.master_frame)
+        self.resample_frame.grid(row=2, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        self.t3 = tk.Frame(self.topFrame)
-        self.t3.pack(anchor=tk.NW, side=tk.TOP, fill=tk.X)
-        self.t4 = tk.Frame(self.topFrame)
-        self.t4.pack(anchor=tk.NW, side=tk.TOP, fill=tk.X)
-        self.t5 = tk.Frame(self.topFrame)
-        self.t5.pack(anchor=tk.NW, side=tk.TOP, fill=tk.X)
+        self.test_resample_frame = tk.Frame(self.master_frame)
+        self.test_resample_frame.grid(row=3, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        self.t5_1 = tk.Frame(self.topFrame)
-        self.t5_1.pack(anchor=tk.NW, side=tk.TOP, fill=tk.X)
-        self.sep6 = ttk.Separator(self.topFrame)
-        self.sep6.pack(side=tk.TOP, expand=True, fill=tk.X, padx=5, pady=5)
+        self.integrate_frame = tk.Frame(self.master_frame)
+        self.integrate_frame.grid(row=4, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        self.t6 = tk.Frame(self.topFrame)
-        self.t6.pack(anchor=tk.NW, side=tk.TOP, expand=True, fill=tk.X)
+        self.out_format_frame = tk.Frame(self.master_frame)
+        self.out_format_frame.grid(row=5, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        self.sepEnd = ttk.Separator(self.topFrame)
-        self.sepEnd.pack(side=tk.TOP, expand=True, fill=tk.X, padx=5, pady=5)
+        self.out_file_frame = tk.Frame(self.master_frame)
+        self.out_file_frame.grid(row=6, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
-        self.b1 = tk.Frame(self.bottomFrame)
-        self.b1.pack(side=tk.TOP, expand=True, fill=tk.X)
-        self.b2 = tk.Frame(self.bottomFrame)
-        self.b2.pack(side=tk.BOTTOM)
+        self.button_frame = tk.Frame(self.master_frame)
+        self.button_frame.grid(row=7, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
+
 
         # Now add the actual GUI content
         # Instructions box
-        self.instruction = tk.Label(self.t1, justify=tk.LEFT, text="Usage instructions: \n 1) Select logger files (.cwa)" +
+        self.instruction = tk.Label(self.title_frame, justify=tk.LEFT, text="Usage instructions: \n 1) Select logger files (.cwa)" +
                                     "\n 2) (Optional) Choose to resample at a frequency \n 3) Select processing options" +
                                     "\n 4) Select output file name and location \n 5) Press convert")
-        self.instruction.pack(anchor=tk.W, pady=10, padx=10)
+        self.instruction.pack(anchor=tk.W, pady=5, padx=5)
 
-        #Input files selection one textbox one label
-        self.inLabel = tk.Label(self.t2, width = 10, justify=tk.LEFT, text="Input Files")
+        # Input file selection
+        self.in_sep = ttk.Separator(self.in_file_frame)
+        self.in_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.inLabel = tk.Label(self.in_file_frame, width = 10, justify=tk.LEFT, text="Input Files")
         self.inLabel.pack(side=tk.LEFT, pady=5, padx=5)
-        self.inDisplay = tk.Entry(self.t2, state=tk.DISABLED, text="Select files...", borderwidth=2)
+        self.inDisplay = tk.Entry(self.in_file_frame, state=tk.DISABLED, text="Select files...", borderwidth=2, width=50)
         self.inDisplay.pack(side=tk.LEFT, pady=5, padx=5, fill=tk.X, expand=True)
-        self.inButton = tk.Button(self.t2, width = 16, text="Browse", command=self.inBrowse, height = 1, borderwidth=2)
+        self.inButton = tk.Button(self.in_file_frame, width = 16, text="Browse", command=self.inBrowse, height = 1, borderwidth=2)
         self.inButton.pack(side=tk.LEFT, padx=5, pady=5)
 
-        # Resample button and text and frequency selector
-        state = tk.NORMAL if self.resample else tk.DISABLED
-        self.frequencyText = tk.StringVar()
-        self.frequencyText.set('---')
-        self.resampleText = tk.Label(self.t3, justify=tk.LEFT, fg='blue', text="Resampler / Downsampler: \n" +
+        # Resample or Decimation Selector
+        state = tk.NORMAL if self.resample.get() else tk.DISABLED
+        self.resample_mode = tk.IntVar(value=1)
+        self.frequencyText = tk.StringVar(value="---")
+
+        self.resample_sep = ttk.Separator(self.resample_frame)
+        self.resample_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+
+        self.resampleText = tk.Label(self.resample_frame, justify=tk.LEFT, fg='blue', text="Resampler / Downsampler: \n" +
                                                                     "  Resampling or downsampling with filtering applied at FREQUENCY / 2 to avoid aliasing")
         self.resampleText.pack(anchor=tk.NW, side = tk.TOP, pady = 5, padx =5)
-        self.resCheck = tk.Checkbutton(self.t3, width = 22, text="Resample", justify=tk.LEFT, command=self.getLoggerRate)
-        self.resCheck.pack(anchor=tk.NW, side = tk.LEFT, pady = 5, padx =5)
-        self.resFreq = tk.Label(self.t3, textvariable=self.frequencyText)
-        self.resFreq.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)
-        #defaultFreq = tk.DoubleVar(value=self.resampleFreq)
-        #self.resFreqInput = tk.Spinbox(self.t3, width = 10, from_=0.5, to_=10000.0, increment=1.0, borderwidth=2, textvariable=defaultFreq, state=state)
-        #self.resFreqInput.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)
-        self.resHz = tk.Label(self.t3, text="Hz")
-        self.resHz.pack(side=tk.LEFT)
+
+        # subframes fro resampling
+        self.resample_frame1 = tk.Frame(self.resample_frame)
+        self.resample_frame1.pack(anchor=tk.NW, side=tk.LEFT)
+        self.resample_frame2 = tk.Frame(self.resample_frame)
+        self.resample_frame2.pack(anchor=tk.SE, side=tk.BOTTOM)
+
+        resample_modes = [("Disabled", 1), ("Resample", 2), ("Decimate", 3)]
+        for mode in resample_modes:
+            tk.Radiobutton(self.resample_frame1, indicatoron=0, text=mode[0], width=20, command=self.change_resample_selection,
+                           padx=4, pady=4, variable=self.resample_mode, value=mode[1])\
+                .pack(anchor=tk.NW, padx=10, pady=4)
+
+        self.resample_f_label = tk.Label(self.resample_frame2, text='Resample Frequency (Hz)', width=25, anchor='e')
+        self.resample_f_label.grid(row=0, column=0, pady=2)
+        self.resample_f_select = tk.Entry(self.resample_frame2, borderwidth=2, width=10, textvariable=self.resample_freq, justify=tk.RIGHT)
+        self.resample_f_select.grid(row=0, column=1, sticky='w')
+
+        self.filter_enable = tk.Checkbutton(self.resample_frame2, text='Lowpass Filter (Hz)', justify=tk.RIGHT, variable=self.lowpass, width=22, anchor='e', command=self.update_resample_filter)
+        self.filter_enable.grid(row=1, column=0, pady=2)
+        self.filter_f_select = tk.Entry(self.resample_frame2, borderwidth=2, width=10, textvariable=self.lowpass_freq, justify=tk.RIGHT)
+        self.filter_f_select.grid(row=1, column=1, sticky='w')
 
         # Trim selection options
-        startT = ""; stopT =""
-        self.trimStartLabel = tk.Label(self.t4, text="Trim Start (decimal minutes)  ", width = 25, justify=tk.RIGHT)
-        self.trimStartLabel.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
-        self.trimStartInput = tk.Entry(self.t4, text="decimal minutes", width = 20, borderwidth=2, textvariable=startT)
+        self.startT = tk.DoubleVar(value=0)
+        self.stopT = tk.DoubleVar(value=0)
+        self.trimStartLabel = tk.Label(self.resample_frame2, text="Trim Start (decimal minutes)  ", width = 25, anchor='e', justify=tk.RIGHT)
+        self.trimStartLabel.grid(row=3, column=0, pady = 2)  # pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimStartInput = tk.Entry(self.resample_frame2, text="decimal minutes", width = 10, borderwidth=2, textvariable=self.startT, justify=tk.RIGHT)
         self.trimStartInput.insert(0, "0")
         self.trimStartInput.config(state=state)
-        self.trimStartInput.pack(padx=5, pady=5, side=tk.LEFT)
+        self.trimStartInput.grid(row=3, column=1, sticky='w')  # .pack(padx=5, pady=5, side=tk.LEFT)
 
-        self.trimEndLabel = tk.Label(self.t5, text="Trim Finish (decimal minutes)", width = 25, justify=tk.RIGHT)
-        self.trimEndLabel.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
-        self.trimEndInput = tk.Entry(self.t5, text="decimal minutes", width = 20, borderwidth=2, textvariable=stopT)
+        self.trimEndLabel = tk.Label(self.resample_frame2, text="Trim Finish (decimal minutes)", width = 25, anchor='e', justify=tk.RIGHT)
+        self.trimEndLabel.grid(row=4, column=0, pady = 2)  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimEndInput = tk.Entry(self.resample_frame2, text="decimal minutes", width = 10, borderwidth=2, textvariable=self.stopT, justify=tk.RIGHT)
         self.trimEndInput.insert(0, "0")
         self.trimEndInput.config(state=state)
-        self.trimEndInput.pack(padx=5, pady=5, side=tk.LEFT)
+        self.trimEndInput.grid(row=4, column=1, sticky='w')  # .pack(padx=5, pady=5, side=tk.LEFT)
 
         # show sample output for time
-        self.trimButton = tk.Button(self.t5_1, text="Compute trim", width=24, height=3, state = state, command=self.testResampleRange)
-        self.trimButton.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
-        self.trimText = tk.Label(self.t5_1, text="Start Time:     N/A\nFinish Time:   N/A\nSamples:        N/A", justify=tk.LEFT)
-        self.trimText.pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimButton = tk.Button(self.resample_frame2, text="Compute trim", width=20, height=3, state = state, command=self.testResampleRange)
+        self.trimButton.grid(row=5, column=0, sticky='nsew', padx=5, pady=5)  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimText = tk.Label(self.resample_frame2, text="Start Time:     N/A\nFinish Time:   N/A\nSamples:        N/A", width=30, anchor='w')
+        self.trimText.grid(row=5, column=1, sticky='w')  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
 
-        # Parallelism options - DISABLED for now
-        '''multi = self.multithread
-        state = tk.NORMAL if self.multithread else tk.DISABLED
-        self.paraWarn = tk.Label(self.t6, text="WARNING:\n  Only set the threads to number of processing cores or less." +
-                                               "\n  Using more cores in combination with large input files may cause instablity. " +
-                                               "\n   - Field Laptop = 2/4 Cores \n   - Workstation = 8 Cores", fg="red", justify=tk.LEFT)
-        self.paraWarn.pack(side=tk.TOP, anchor=tk.NW, pady=10, padx=10)
-        self.paraCheck = tk.Checkbutton(self.t6, width = 22, text = "Multithread", variable=multi, command=self.changeTogglePara)
-        self.paraCheck.pack(anchor=tk.NW, side = tk.LEFT, pady = 5, padx =5)
-        defaultCores = tk.IntVar(value=int(self.numThreads))
-        self.paraCores = tk.Spinbox(self.t6, width = 10, from_=1, to_=64, increment=1, state=state, textvariable=defaultCores, borderwidth = 2)
-        self.paraCores.pack(anchor=tk.NW, side=tk.LEFT, pady=5, padx=5)'''
+        # By default disabled the resample frames
+        self.set_frame_state(self.resample_frame2, 'disabled')
+        self.set_frame_state(self.resample_frame2, 'disabled')
 
         # Instead place the byte width selector here
-        self.outputDesc = tk.Label(self.t6, text="Catman Output File (.BIN) format: \n" +
+        self.output_format_sep = ttk.Separator(self.out_format_frame)
+        self.output_format_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.outputDesc = tk.Label(self.out_format_frame, text="Catman Output File (.BIN) format: \n" +
                                                  "  Recommended: \n" +
-                                                 "    8 Byte Spacing (Full size)     4GB output = 1GB input\n" +
-                                                 "    4 Byte Spacing (Half Size)     2GB output = 1GB input\n" +
+                                                 "    8 Byte Spacing (Full size)     1GB input = 4GB output\n" +
+                                                 "    4 Byte Spacing (Half Size)     1GB input = 2GB output\n" +
                                                  "  Not Recommended: \n" +
-                                                 "    2 Byte Spacing (Quater Size)   1GB output = 1GB input (May take 20% longer to generate)",
+                                                 "    2 Byte Spacing (Quater Size)   1GB input = 1GB output (May take 20% longer to generate)",
                                    fg="blue", justify=tk.LEFT)
         self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=5)
         # Dropdown to select the number of bytes to put in the output file
         self.bytesVar = tk.StringVar(self.root)
         self.bytesVar.set("8 Byte")
-        self.byteDropDown = tk.OptionMenu(self.t6, self.bytesVar, "8 Byte", "4 Byte", "2 Byte", command=self.byteSelect)
+        self.byteDropDown = tk.OptionMenu(self.out_format_frame, self.bytesVar, "8 Byte", "4 Byte", "2 Byte", command=self.byteSelect)
         self.byteDropDown.pack(side=tk.TOP, anchor=tk.N, padx= 10, pady=5)
 
         # Now get file output from user
-        self.outLabel = tk.Label(self.b1, justify=tk.LEFT, width = 10, text="Output File")
+        self.out_file_sep = ttk.Separator(self.out_file_frame)
+        self.out_file_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.outLabel = tk.Label(self.out_file_frame, justify=tk.LEFT, width = 10, text="Output File")
         self.outLabel.pack(side=tk.LEFT, pady=5, padx=5)
-        self.outDisplay = tk.Entry(self.b1, state=tk.DISABLED, text="Select file...", borderwidth=2)
+        self.outDisplay = tk.Entry(self.out_file_frame, state=tk.DISABLED, text="Select file...", borderwidth=2)
         self.outDisplay.pack(side=tk.LEFT, pady=5, padx=5, fill=tk.X, expand=True)
-        self.outButton = tk.Button(self.b1, text="Select", width = 16, height = 1, command=self.outBrowse,  borderwidth=2)
+        self.outButton = tk.Button(self.out_file_frame, text="Select", width = 16, height = 1, command=self.outBrowse,  borderwidth=2)
         self.outButton.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Exit and conform buttons
-        self.button_exit = tk.Button(self.b2, text="Quit", command=self.quit, width=25)
-        self.button_confirm = tk.Button(self.b2, text="Convert", command=self.confirm, width=25)
-        self.button_exit.pack(padx=5, pady=10, side=tk.LEFT)
-        self.button_confirm.pack(padx=5, pady=10, side=tk.LEFT)
+        self.button_sep = ttk.Separator(self.button_frame)
+        self.button_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.button_exit = tk.Button(self.button_frame, text="Quit", command=self.quit, width=25)
+        self.button_confirm = tk.Button(self.button_frame, text="Convert", command=self.confirm, width=25)
+        self.button_exit.pack(padx=5, pady=10, side=tk.LEFT, fill=tk.X, expand=True)
+        self.button_confirm.pack(padx=5, pady=10, side=tk.RIGHT, fill=tk.X, expand=True)
 
-        self.statusText = tk.Label(self.b3, text="Ready", justify=tk.LEFT)
-        self.statusText.pack(anchor=tk.NW, fill=tk.X, expand=True)
+        #self.statusText = tk.Label(self.button_frame, text="Ready", justify=tk.LEFT)
+        #self.statusText.pack(anchor=tk.NW, fill=tk.X, expand=True)
 
         # Enter the main loop and display the GUI
         self.root.mainloop()
@@ -192,7 +201,6 @@ class PrefForm():
         else:
             self.byteWidth = 8
 
-
     def changeTogglePara(self):
         '''Unused: Update the current multithreading options'''
         self.multithread = not self.multithread
@@ -200,7 +208,6 @@ class PrefForm():
         state = tk.NORMAL if self.multithread else tk.DISABLED
         self.paraCores.config(state=state)
         self.numThreads = self.paraCores.get()
-
 
     def changeToggleRes(self):
         '''Toggle on or off the resample option. This updates the trip buttons as well'''
@@ -211,7 +218,6 @@ class PrefForm():
         self.trimStartInput.config(state=state)
         self.trimEndInput.config(state=state)
         self.trimButton.config(state=state)
-
 
     def inBrowse(self):
         '''Let the user browse for .cwa files as input to the program'''
@@ -228,6 +234,7 @@ class PrefForm():
         self.inDisplay.insert(0, stringName)
         self.inDisplay.config(state=tk.DISABLED)
 
+        self.change_resample_selection()
 
     def outBrowse(self):
         '''Let the user browse and Save-as the output file .bin and .tst location and name'''
@@ -238,42 +245,97 @@ class PrefForm():
         self.outDisplay.insert(0, self.saveName)
         self.outDisplay.config(state=tk.DISABLED)
 
-    def getLoggerRate(self):
-        self.changeToggleRes()
+    def change_resample_selection(self):
+        '''Toggle on or off the resample or decimate option. This updates the trim buttons as well'''
 
+        # MODE
+        # 1 = No Resample
+        # 2 = Resample to original intented logger frequency + optional filtering
+        # 3 = Decimate to rate less than original logger + forced <fs/2 filtering
+        mode = self.resample_mode.get()
+        self.resample = False if mode == 1 else True
+
+        state = tk.NORMAL if self.resample else tk.DISABLED
+
+        self.set_frame_state(self.resample_frame2, state)
+        self.set_frame_state(self.resample_frame2, state)
+
+        if mode == 2:
+            rate_text = self.get_logger_rates()
+            self.resample_freq.set(rate_text)
+            self.resample_f_select.configure(state='disabled')
+            self.lowpass.set(False)
+        elif mode == 3:
+            rate_text = self.get_logger_rates()
+            self.resample_freq.set(rate_text)
+            if isinstance(rate_text, float):
+                self.lowpass_freq.set(rate_text/2.0)
+            self.resample_f_select.configure(state='normal')
+            self.lowpass.set(True)
+            self.filter_enable.configure(state='disabled')
+
+        self.update_resample_filter()
+
+
+    def set_frame_state(self, frame, state):
+        for child in frame.winfo_children():
+            child.configure(state=state)
+
+    def get_logger_rates(self):
         # Do a dummy run of the .cwa read and extract only the average logging frequency
         (_, _, _, rate) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample, getFreq=True)
         loggerDispFreq = "---"
 
         if float(rate['max']) - float(rate['min']) > 70.0:
-            loggerDispFreq = "ERROR, All Loggers are not same rate!"
+            loggerDispFreq = "ERROR, Diff. Rates!"
         elif not self.resample:
             loggerDispFreq = "---"
         elif float(rate['average']) == 0.0:
-            loggerDispFreq = "No loggers Selected! ---"
+            loggerDispFreq = "No loggers Selected!"
         else:
-            self.loggerFrequency = (round(float(rate['average']) / 100.0, 0) * 100) / 4.0
-            loggerDispFreq = str(self.loggerFrequency)
+            loggerDispFreq = (round(float(rate['average']) / 100.0, 0) * 100)
+            self.max_logger_rate = loggerDispFreq
 
-        self.frequencyText.set(loggerDispFreq)
+        return loggerDispFreq
+
+    def update_resample_filter(self):
+        mode = self.resample_mode.get()
+        if mode == 2:
+            toggle_state = self.lowpass.get()
+            self.filter_f_select.configure(state='disabled' if not toggle_state else 'normal')
 
     def testResampleRange(self):
         '''Apply the user trimmed time to the dummy run of loading .cwa files. The min and max start times are
             returned after being trimmed in AWST timezone'''
-        trimStart = float(eval(self.trimStartInput.get())) * 60.0
-        trimEnd = float(eval(self.trimEndInput.get())) * 60.0
 
         if len(self.filePaths) == 0:
+            print("No files selected")
             return
 
-        resampleFreq = self.loggerFrequency
-        numThreads = 1 # DISABLED int(self.paraCores.get())
+        try:
+            resample_freq = self.resample_freq.get()
+            trimStart = self.startT.get() * 60.0
+            trimEnd = self.stopT.get() * 60.0
+        except tk.TclError as e:
+            print(e)
+            return
+
+        if trimStart < 0 or trimEnd < 0:
+            print("Trim cannot be negative")
+            return
+
+        if resample_freq <= 1:
+            print("Resample frequency too low. Must be >1 Hz")
+            return
+        elif resample_freq > self.max_logger_rate:
+            print("Resample frequency too high. Must be no more than", self.max_logger_rate)
+            return
 
         # Dummy run the loading of the logger files. It will return the timestamp of the start and stop times as well
         # as the number of samples that will be generated in the output files.
-        (startTime, endTime, numSamples, _) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample,
-                                                                             resampleFreq=resampleFreq, multithread=self.multithread,
-                                                                             nThreads=numThreads, demoRun=True, trimStart=trimStart, trimEnd=trimEnd)
+        (startTime, endTime, numSamples, _) = ConvertMain.compute_multi_channel(
+            self.filePaths, self.saveName, resample=self.resample,
+            resample_freq=resample_freq, demoRun=True, trimStart=trimStart, trimEnd=trimEnd)
         # Special methods to fake the timezone display in the GUI. Later, this can be updated to accept the local
         #   timezone of the computer, but for now, Australian Western Standard Time is sufficient.
         start = CWA.timezone_timestamp_string(startTime)
@@ -289,27 +351,64 @@ class PrefForm():
         resource drain placed on the machine.
 
         Two instances of this program should not be run simultaneously unless the machine is a workstation'''
-        trimStart = float(eval(self.trimStartInput.get())) * 60.0
-        trimEnd = float(eval(self.trimEndInput.get())) * 60.0
 
         # Checks for input file number only, not actually goodness of files.
         if len(self.filePaths) == 0:
-            self.statusText.config(text="No valid input files")
+            #self.statusText.config(text="No valid input files")
             print("Error, No file Selected")
             return
 
         # Get the user to specify at least one output file
         if self.saveName == "":
-            self.statusText.config(text="No valid output file")
+            #self.statusText.config(text="No valid output file")
             print("Error, No file Selected")
             return
 
-        resampleFreq = self.loggerFrequency
-        numThreads = 1 # int(self.paraCores.get())  DISABLED
+        try:
+            trimStart = self.startT.get() * 60.0
+            trimEnd = self.stopT.get() * 60.0
+
+            resample = self.resample
+            resample_freq = self.resample_freq.get()
+
+            lowpass = self.lowpass
+            lowpass_freq = self.lowpass_freq.get()
+
+            integrate = self.integrate.get()
+            high1 = self.highpass1_freq.get()
+            high2 = self.highpass2_freq.get()
+        except tk.TclError as e:
+            print(e)
+            return
+
+        if resample and (trimStart < 0 or trimEnd < 0):
+            print("Trim cannot be negative")
+            return
+
+        if resample and resample_freq <= 1:
+            print("Resample frequency too low. Must be >1 Hz")
+            return
+        elif resample and resample_freq > self.max_logger_rate:
+            print("Resample frequency too high. Must be no more than", self.max_logger_rate)
+            return
+
+        if resample and lowpass and lowpass_freq <= 1:
+            print("Lowpass frequency too low. Must be >1 Hz")
+            return
+        elif resample and lowpass_freq > resample_freq/2.00:
+            print("Lowpass frequency too high. Must be no more than", resample_freq/2.0)
+            return
+
+        if integrate and (high1 <= 0 or high2 <= 0):
+            print("Highpass filters cannot be <= 0 Hz")
+            return
 
         # Spawn a new thread and pass all the parameters to it. This must be cleaned up at some point !
-        self.thread1 = threading.Thread(target=ConvertMain.compute_multi_channel, args=(self.filePaths, self.saveName, self.resample, resampleFreq,
-                                          self.multithread, numThreads, trimStart, trimEnd, False, self.byteWidth, False))
+        self.thread1 = threading.Thread(target=ConvertMain.compute_multi_channel,
+                                        args=(self.filePaths, self.saveName,
+                                              resample, resample_freq, lowpass, lowpass_freq,
+                                              integrate, high1, high2,
+                                              trimStart, trimEnd, False, self.byteWidth, False))
         self.thread1.start()
         self.button_confirm.config(state=tk.DISABLED)
 

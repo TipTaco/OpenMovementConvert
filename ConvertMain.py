@@ -28,8 +28,11 @@ RESAMPLE_FREQ: float = 800.0
 OUTPUT_DATA_WIDTH: int = 4
 
 
-def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resampleFreq=RESAMPLE_FREQ,
-                          multithread=MULTITHREAD, nThreads:int=int(NUM_THREADS), trimStart=0, trimEnd=0,
+def compute_multi_channel(listLoggerFiles, outputFile,
+                          resample=RESAMPLE, resample_freq=RESAMPLE_FREQ,
+                          lowpass=False, lowpass_freq=100.0,
+                          integrate=False, high1_freq=1.0, high2_freq=1.0,
+                          trimStart=0, trimEnd=0,
                           demoRun = False, byteWidth=OUTPUT_DATA_WIDTH, getFreq=False):
     """ Operates on many loggers
     Each physical logger has three (or more) accelerometer channels and as such will command THREE channels in the output
@@ -84,7 +87,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         return (0, 0, 0, rate)
 
     # Get resample ranges
-    (rzStart, rzStop, rzSamples) = Resampler.get_range(startTime, stopTime, resampleFreq, trimStart, trimEnd)
+    (rzStart, rzStop, rzSamples) = Resampler.get_range(startTime, stopTime, resample_freq, trimStart, trimEnd)
 
     # Return this function early if the GUI requires a trim time only
     if demoRun:
@@ -113,7 +116,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         numChannelsPerLogger = channels['max']
 
         if resample:
-            sampleRate = resampleFreq
+            sampleRate = resample_freq
             numSamples = rzSamples
             beginTime = rzStart
             endTime = rzStop
@@ -137,7 +140,7 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
     #   set of channels were resampled or not
     comment = "Linear Resampling "
     if resample:
-        comment += "on at " + str(resampleFreq) + "Hz"
+        comment += "on at " + str(resample_freq) + "Hz"
     else: comment += "off."
     (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, byteWidth)
 
@@ -171,24 +174,20 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
             startVal = float(logger['first']['timestamp'])
             endVal = float(logger['last']['timestamp'])
             # Update the array in overwrite mode to contain the new resampled data
-            filter_freq = resampleFreq / 2
-            print("filtering from", original_freq, 'to', filter_freq)
-            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.shape, masterArray[1][0])
-            masterArray = rFilter.lowpass_filter(masterArray, in_freq=original_freq, cutoff_freq=filter_freq)
-            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.shape, masterArray[1][0])
-            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
-            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.shape, masterArray[1][0])
+            if lowpass:
+                print("Lowpass filtering at", lowpass_freq)
+                masterArray = rFilter.lowpass_filter(masterArray, in_freq=original_freq, cutoff_freq=lowpass_freq)
+            masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1 / resample_freq)
 
-        if True:
-            input_freq = original_freq if not resample else resampleFreq
-            print("Integrating at", input_freq)
-            print("Begin filtering highpass 1")
-            masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=1.0)
+        if integrate:
+            input_freq = original_freq if not resample else resample_freq
+            print("Integrating at", input_freq, "Hz")
+            print("Begin highpass Filtering at", high1_freq, "Hz")
+            masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=high1_freq)
             print("Begin integration")
             masterArray = rIntegrate.integrate_data(masterArray, frequency=input_freq)
-            print("Begin filtering highpass 2")
-            masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=1.0)
-            print("Integration and filtering complete")
+            print("Begin highpass filtering at", high2_freq, "Hz")
+            masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=high2_freq)
 
         # Output the data for this logger to file and save the last position in file
         output_samples = numSamples if not resample else rzSamples
