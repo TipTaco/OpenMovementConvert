@@ -218,6 +218,7 @@ def cwa_data(block, extractData=False):
             frequency = 3200 / (1 << (15 - (rateCode & 0x0f)))
 
             timeFractional = 0;
+
             # if top-bit set, we have a fractional date
             if deviceFractional & 0x8000:
                 # Need to undo backwards-compatible shim by calculating how many whole samples the fractional part of timestamp accounts for.

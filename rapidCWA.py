@@ -50,7 +50,7 @@ def readToMem(filePath, loggerInfo=None, cols=['X', 'Y', 'Z']):
     print("Read Complete. (", current_time, ")")
     return masterArray.view(np.int16).reshape(masterArray.shape + (-1,)).transpose().astype(np.float64, casting='safe')
 
-def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, cols=['X', 'Y', 'Z']):
+def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, samples=0):
 
     first = loggerInfo['first']
     numChannels = first['channels']
@@ -104,9 +104,9 @@ def writeToFile(arrayIn, filePath, loggerInfo=None, offsetBytes=0, sizeBytes=8, 
             fp.write(maxVal.astype('float64').tobytes())
 
             # Write the data in levels between 0 and [divisor]
-            fp.write(((arrayIn[i] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
+            fp.write(((arrayIn[i][:samples] / iScale - minVal)*(divisor/rangeVal)).astype(type).tobytes())
         else:
-            fp.write((arrayIn[i]/ iScale).astype(type).tobytes())
+            fp.write((arrayIn[i][:samples]/ iScale).astype(type).tobytes())
         #print("Logger Channel", cols[i], "written")
         pbar.printProgressBar((100.0 / numChannels) * (i + 1), 100, prefix="Write File", printEnd=" ")
 

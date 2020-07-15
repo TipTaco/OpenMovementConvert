@@ -7,6 +7,7 @@ import numpy as np
 
 import cwa_metadata as CWA   # cwa file type converter
 import rFilter
+import rIntegrate
 import rapidCWA as rCWA  # Rapid cwa file loader
 import rInterpolate as rInter  # Rapid interpolator
 import bin_data as BIN  # bin file type converter
@@ -163,22 +164,36 @@ def compute_multi_channel(listLoggerFiles, outputFile, resample=RESAMPLE, resamp
         masterArray = rCWA.readToMem(fp, loggerInfo=logger, cols=axis)
         print(" Loaded ", masterArray.shape[0], " channels.", masterArray.shape[1], "samples each.")
 
+        original_freq = float(logger['file']['meanRate'])
+
         # If the resample option was selected, first resample the data before outputting it to the file
         if resample:
             startVal = float(logger['first']['timestamp'])
             endVal = float(logger['last']['timestamp'])
             # Update the array in overwrite mode to contain the new resampled data
-            original_freq = float(logger['file']['meanRate'])
             filter_freq = resampleFreq / 2
             print("filtering from", original_freq, 'to', filter_freq)
-            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.dtype)
+            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.shape, masterArray[1][0])
             masterArray = rFilter.lowpass_filter(masterArray, in_freq=original_freq, cutoff_freq=filter_freq)
-            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.dtype)
+            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.shape, masterArray[1][0])
             masterArray = rInter.interp1d(masterArray, startVal, endVal, rzStart, rzStop, 1/resampleFreq)
-            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.dtype)
+            print("Min/max:", np.min(masterArray), np.max(masterArray), masterArray.shape, masterArray[1][0])
+
+        if True:
+            input_freq = original_freq if not resample else resampleFreq
+            print("Integrating at", input_freq)
+            print("Begin filtering highpass 1")
+            masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=1.0)
+            print("Begin integration")
+            masterArray = rIntegrate.integrate_data(masterArray, frequency=input_freq)
+            print("Begin filtering highpass 2")
+            masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=1.0)
+            print("Integration and filtering complete")
 
         # Output the data for this logger to file and save the last position in file
-        lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos, sizeBytes=byteWidth, cols=axis)
+        output_samples = numSamples if not resample else rzSamples
+        lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos,
+                                       sizeBytes=byteWidth, samples=output_samples)
         if len(loggers) > 1: print("\n COMPLETED", (i+1), "OF", len(loggers), "FILES")
 
     # Relay to the user how long the execution for all files took.
