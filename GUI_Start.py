@@ -1,5 +1,7 @@
-# Author Adrian Shedley
+# Author Adrian Shedley for EDC
 # date 28 May 2020
+# Last modified 15 July 2020, GUI updated and integration method added.
+# Highpass filtering method still to be checked
 
 import tkinter as tk
 from tkinter import ttk
@@ -13,8 +15,7 @@ import threading
 from multiprocessing import freeze_support
 
 PROCESS: str = 'CWA_to_BIN'
-VERSION: str = 'v1.01'
-
+VERSION: str = 'v1.2'
 
 class PrefForm():
     def __init__(self):
@@ -25,6 +26,9 @@ class PrefForm():
         self.filePaths = []
         self.saveName: str = ""
 
+        self.startT = tk.DoubleVar(value=0.0)
+        self.stopT = tk.DoubleVar(value=0.0)
+
         self.resample = tk.BooleanVar(value=False)
         self.resample_freq = tk.DoubleVar(value=800.0)
 
@@ -32,16 +36,16 @@ class PrefForm():
         self.lowpass_freq = tk.DoubleVar(value=100.0)
 
         self.integrate = tk.BooleanVar(value=False)
-        self.highpass1_freq = tk.DoubleVar(value=0.0)
+        self.highpass1_freq = tk.DoubleVar(value=1.0)
         self.integrate_unit: str = "mm/s"
-        self.highpass2_freq = tk.DoubleVar(value=0.0)
+        self.highpass2_freq = tk.DoubleVar(value=1.0)
 
         self.multithread: bool = False
         self.numThreads: int = 4
         self.byteWidth: int = 8
 
         # The main frame for the GUI
-        self.master_frame = tk.Frame(self.root, bg='red')
+        self.master_frame = tk.Frame(self.root)
         self.master_frame.pack(anchor=tk.NW, fill=tk.BOTH, expand=True, side=tk.TOP, pady=1, padx=1)
         tk.Grid.columnconfigure(self.root, 0, weight=1)
         for y in range(1,8):
@@ -56,9 +60,6 @@ class PrefForm():
 
         self.resample_frame = tk.Frame(self.master_frame)
         self.resample_frame.grid(row=2, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
-
-        self.test_resample_frame = tk.Frame(self.master_frame)
-        self.test_resample_frame.grid(row=3, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
 
         self.integrate_frame = tk.Frame(self.master_frame)
         self.integrate_frame.grid(row=4, column=0, columnspan=1, sticky='nwew', padx=1, pady=1)
@@ -75,14 +76,18 @@ class PrefForm():
 
         # Now add the actual GUI content
         # Instructions box
-        self.instruction = tk.Label(self.title_frame, justify=tk.LEFT, text="Usage instructions: \n 1) Select logger files (.cwa)" +
-                                    "\n 2) (Optional) Choose to resample at a frequency \n 3) Select processing options" +
-                                    "\n 4) Select output file name and location \n 5) Press convert")
+        self.instruction = tk.Label(self.title_frame, justify=tk.LEFT, text="Usage instructions: " +
+                                    "\n 1) Select logger files (.cwa)" +
+                                    "\n 2) (Optional) Choose to resample or decimate at a frequency " +
+                                    "\n 3) (Optional) Choose to integrate with highpass filters"
+                                    "\n 4) Select output file options" +
+                                    "\n 5) Select output file name and location " +
+                                    "\n 6) Press convert")
         self.instruction.pack(anchor=tk.W, pady=5, padx=5)
 
         # Input file selection
         self.in_sep = ttk.Separator(self.in_file_frame)
-        self.in_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.in_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
         self.inLabel = tk.Label(self.in_file_frame, width = 10, justify=tk.LEFT, text="Input Files")
         self.inLabel.pack(side=tk.LEFT, pady=5, padx=5)
         self.inDisplay = tk.Entry(self.in_file_frame, state=tk.DISABLED, text="Select files...", borderwidth=2, width=50)
@@ -96,11 +101,11 @@ class PrefForm():
         self.frequencyText = tk.StringVar(value="---")
 
         self.resample_sep = ttk.Separator(self.resample_frame)
-        self.resample_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.resample_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
 
         self.resampleText = tk.Label(self.resample_frame, justify=tk.LEFT, fg='blue', text="Resampler / Downsampler: \n" +
-                                                                    "  Resampling or downsampling with filtering applied at FREQUENCY / 2 to avoid aliasing")
-        self.resampleText.pack(anchor=tk.NW, side = tk.TOP, pady = 5, padx =5)
+                                                                    "  Resampling or downsampling requires filtering applied at FREQUENCY / 2 to avoid aliasing")
+        self.resampleText.pack(anchor=tk.NW, side = tk.TOP, pady=5, padx =5)
 
         # subframes fro resampling
         self.resample_frame1 = tk.Frame(self.resample_frame)
@@ -125,8 +130,6 @@ class PrefForm():
         self.filter_f_select.grid(row=1, column=1, sticky='w')
 
         # Trim selection options
-        self.startT = tk.DoubleVar(value=0)
-        self.stopT = tk.DoubleVar(value=0)
         self.trimStartLabel = tk.Label(self.resample_frame2, text="Trim Start (decimal minutes)  ", width = 25, anchor='e', justify=tk.RIGHT)
         self.trimStartLabel.grid(row=3, column=0, pady = 2)  # pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
         self.trimStartInput = tk.Entry(self.resample_frame2, text="decimal minutes", width = 10, borderwidth=2, textvariable=self.startT, justify=tk.RIGHT)
@@ -151,9 +154,33 @@ class PrefForm():
         self.set_frame_state(self.resample_frame2, 'disabled')
         self.set_frame_state(self.resample_frame2, 'disabled')
 
+        # Add Integration selector
+        self.integrate_sep = ttk.Separator(self.integrate_frame)
+        self.integrate_sep.grid(row=0, column=0, columnspan=2, sticky='ew', pady=2)
+        self.integrate_title = tk.Label(self.integrate_frame, fg='blue', justify=tk.LEFT, anchor='w',
+                                        text='Integration:\n  Integrates the accelerometer data to velocity data in mm/s.\n' +
+                                        '  A highpass filter is performed before and after integration to remove DC components.')
+        self.integrate_title.grid(row=1, column=0, columnspan=2, sticky='nw', pady=5, padx =5)
+        self.integrate_label = tk.Label(self.integrate_frame, text="Integrate", width=50, anchor='e', justify=tk.RIGHT)
+        self.integrate_label.grid(row=2, column=0)
+        self.integrate_enable = tk.Checkbutton(self.integrate_frame, text="", width=27, anchor='w', justify=tk.LEFT, variable=self.integrate, command=self.update_integrate_check)
+        self.integrate_enable.grid(row=2, column=1)
+
+        self.high1_label = tk.Label(self.integrate_frame, text="Pre-integration Highpass Filter (Hz)", width=50, anchor='e')
+        self.high1_label.grid(row=3, column=0, pady=2)
+        self.high1_entry = tk.Entry(self.integrate_frame, borderwidth=2, width=10, textvariable=self.highpass1_freq, justify=tk.RIGHT)
+        self.high1_entry.grid(row=3, column=1, sticky='w')
+
+        self.high2_label = tk.Label(self.integrate_frame, text="Post-integration Highpass Filter (Hz)", width=50, anchor='e')
+        self.high2_label.grid(row=4, column=0, pady=2)
+        self.high2_entry = tk.Entry(self.integrate_frame, borderwidth=2, width=10, textvariable=self.highpass2_freq, justify=tk.RIGHT)
+        self.high2_entry.grid(row=4, column=1, sticky='w')
+
+        self.update_integrate_check()
+
         # Instead place the byte width selector here
         self.output_format_sep = ttk.Separator(self.out_format_frame)
-        self.output_format_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.output_format_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
         self.outputDesc = tk.Label(self.out_format_frame, text="Catman Output File (.BIN) format: \n" +
                                                  "  Recommended: \n" +
                                                  "    8 Byte Spacing (Full size)     1GB input = 4GB output\n" +
@@ -170,7 +197,7 @@ class PrefForm():
 
         # Now get file output from user
         self.out_file_sep = ttk.Separator(self.out_file_frame)
-        self.out_file_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.out_file_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
         self.outLabel = tk.Label(self.out_file_frame, justify=tk.LEFT, width = 10, text="Output File")
         self.outLabel.pack(side=tk.LEFT, pady=5, padx=5)
         self.outDisplay = tk.Entry(self.out_file_frame, state=tk.DISABLED, text="Select file...", borderwidth=2)
@@ -180,7 +207,7 @@ class PrefForm():
 
         # Exit and conform buttons
         self.button_sep = ttk.Separator(self.button_frame)
-        self.button_sep.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.button_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
         self.button_exit = tk.Button(self.button_frame, text="Quit", command=self.quit, width=25)
         self.button_confirm = tk.Button(self.button_frame, text="Convert", command=self.confirm, width=25)
         self.button_exit.pack(padx=5, pady=10, side=tk.LEFT, fill=tk.X, expand=True)
@@ -304,6 +331,11 @@ class PrefForm():
             toggle_state = self.lowpass.get()
             self.filter_f_select.configure(state='disabled' if not toggle_state else 'normal')
 
+    def update_integrate_check(self):
+        integrate = self.integrate.get()
+        self.high1_entry.configure(state='disabled' if not integrate else 'normal')
+        self.high2_entry.configure(state='disabled' if not integrate else 'normal')
+
     def testResampleRange(self):
         '''Apply the user trimmed time to the dummy run of loading .cwa files. The min and max start times are
             returned after being trimmed in AWST timezone'''
@@ -374,7 +406,7 @@ class PrefForm():
             lowpass = self.lowpass
             lowpass_freq = self.lowpass_freq.get()
 
-            integrate = self.integrate.get()
+            integrate = self.integrate
             high1 = self.highpass1_freq.get()
             high2 = self.highpass2_freq.get()
         except tk.TclError as e:

@@ -136,12 +136,11 @@ def pack_string(string):
     return outbytes
 
 # A function to take the data block created by the CWA convert and write the equivelant to a .BIN file
-def generate_BIN(testName, testComment, channelInfos, dataWidth):
+def generate_BIN(testName, testComment, channelInfos, dataWidth, units='g'):
     header = bytearray()
 
     # The number of channels as per the first block
     numChannels = len(channelInfos)
-    units = "g"
 
     exportFormat = 0
     if dataWidth == 4:

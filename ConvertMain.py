@@ -121,6 +121,9 @@ def compute_multi_channel(listLoggerFiles, outputFile,
             beginTime = rzStart
             endTime = rzStop
 
+        if integrate:
+            logger
+
         # generate a Channel object for each channel
         for i in range(numChannelsPerLogger):
             channelName = loggerId + "_" + sessionId + "_" + axis[i]
@@ -138,10 +141,17 @@ def compute_multi_channel(listLoggerFiles, outputFile,
 
     # Write the comment that will appear at the top of the catman test entry. This is a fast indication of if the
     #   set of channels were resampled or not
-    comment = "Linear Resampling "
+    comment = "Resampled"
     if resample:
-        comment += "on at " + str(resample_freq) + "Hz"
-    else: comment += "off."
+        comment += " @" + str(resample_freq) + "Hz."
+        if lowpass:
+            comment += " Lowpass@" + str(lowpass_freq) + "Hz"
+    else: comment = "Not resampled."
+
+    if integrate:
+        comment += " Integrated with highpass @" + str(high1_freq) + " and " + str(high2_freq) + "."
+
+    units = 'g' if not integrate else 'mm/s'
     (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, byteWidth)
 
     print("Saving output file to", dirname + "/")
