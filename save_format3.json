@@ -19,7 +19,7 @@
   },
   {
    "optionDest": "name",
-   "value": "CWA_to_BIN_v0.9"
+   "value": "CWA_to_BIN_v1.2"
   },
   {
    "optionDest": "ascii",
@@ -84,6 +84,18 @@
   {
    "optionDest": "datas",
    "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/ProgressPrinter.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/rFilter.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/rIntegrate.py;."
+  },
+  {
+   "optionDest": "datas",
+   "value": "C:/Users/John.Shedley/PycharmProjects/OpenMovementConvert/rInterpolate.py;."
   }
  ],
  "nonPyinstallerOptions": {

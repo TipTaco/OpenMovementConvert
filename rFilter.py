@@ -5,7 +5,7 @@
 import numpy as np
 
 # import scipy as sp
-from scipy.signal import firwin, butter
+from scipy.signal import butter
 from scipy.signal import filtfilt, sosfiltfilt
 
 
@@ -15,6 +15,8 @@ def _butter_lowpass(order, cutoff_freq):
 def _butter_highpass(order, cutoff_freq):
     return butter(order, Wn=cutoff_freq, btype='highpass', analog=False, output='sos')
 
+#def _cheby2_highpass(order, cutoff_freq):
+#    return cheby2(order, 40.0, Wn=cutoff_freq, btype='highpass', analog=False, output='sos')
 
 def lowpass_filter(data, order=8, in_freq=800.0, cutoff_freq=100.0):
 
@@ -29,10 +31,9 @@ def lowpass_filter(data, order=8, in_freq=800.0, cutoff_freq=100.0):
     return filtfilt(b[0], b[1], data)
 
 
-def highpass_filter(data, order=8, in_freq=800.0, cutoff_freq=100.0):
+def highpass_filter(data, order=8, in_freq=800.0, cutoff_freq=1.0):
     highp_freq = (cutoff_freq / (in_freq/2))
-    print("Highpass cutoff", highp_freq)
-    sos = _butter_highpass(order, highp_freq)
+    sos = _butter_highpass(order, highp_freq) # _butter_highpass(order, highp_freq)
 
     # Perform the filtering using Scipy, expensive operation
     return sosfiltfilt(sos, data)

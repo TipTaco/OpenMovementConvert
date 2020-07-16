@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 
 import numpy as np
+from scipy import signal
 
 import rIntegrate
 import rInterpolate
@@ -12,7 +13,6 @@ import rFilter
 
 from matplotlib import pyplot as plt
 import scipy.fftpack
-from scipy.signal import firwin
 
 # Code goes here
 
@@ -32,22 +32,22 @@ T = 1/f
 x = np.linspace(0.0, N*T, N)
 y = x[x < 100].reshape(1, N)
 
-yf = rFilter.highpass_filter(y, order=8, in_freq=800.0, cutoff_freq=1.0)
+
+yf = rFilter.highpass_filter(y, order=4, in_freq=800.0, cutoff_freq=10.0)
 Y = rIntegrate.integrate_data(yf, frequency=800.0)
-YF = rFilter.highpass_filter(Y, order=8, in_freq=800.0, cutoff_freq=1.0)
+YF = rFilter.highpass_filter(Y, order=4, in_freq=800.0, cutoff_freq=10.000)
 
 plt.figure(3)
 plt.plot(x, y[0])
 plt.plot(x, yf[0])
-plt.show()
+#plt.show()
 
 plt.figure(4)
 plt.plot(x, Y[0])
 plt.plot(x, YF[0])
-plt.show()
+#plt.show()
 
-y = np.sin(50.0 * 2 * np.pi * (x**5)).reshape(1, N)
-
+y = np.sin(50.0 * 2 * np.pi * (np.sqrt(x))).reshape(1, N)
 
 
 print(x.shape)
@@ -55,9 +55,8 @@ print(y.shape)
 
 x_fft = np.linspace(0.0, 1.0/(2.0*T), N//2)
 
-
-filtered = rFilter.lowpass_filter(y, order=16, in_freq=800.0, cutoff_freq=100.0)
-filtered_high = rFilter.highpass_filter(y, order=8, in_freq=800.0, cutoff_freq=1.0)
+filtered = rFilter.lowpass_filter(y, order=8, in_freq=800.0, cutoff_freq=100.0)
+filtered_high = rFilter.highpass_filter(y, order=9, in_freq=800.0, cutoff_freq=1.0)
 
 y_fft = scipy.fftpack.fft(y[0])
 filtered_fft = scipy.fftpack.fft(filtered[0])
@@ -74,6 +73,22 @@ ax2.plot(x_fft, 20 * np.log10(2.0/N * np.abs(y_fft[:N//2])))
 ax2.plot(x_fft, 20 * np.log10(2.0/N * np.abs(filtered_fft[:N//2])))
 ax2.plot(x_fft, 20 * np.log10(2.0/N * np.abs(filtered_high_fft[:N//2])))
 ax2.set_title('FFT')
+#plt.show()
+
+
+highpass_freq = 1.0
+cutoff_freq = highpass_freq/(f/2.0)
+print(cutoff_freq)
+sos = signal.butter(8, cutoff_freq, btype='highpass', analog=False, output='sos')
+#sos = signal.cheby2(9, 40, cutoff_freq, btype='highpass', analog=False, output='sos')
+
+w, h = signal.sosfreqz(sos, worN=4096*8)
+
+plt.figure(5)
+plt.title("Filter freq response")
+plt.plot(w, 20 * np.log10(abs(h)), 'b')
+plt.ylabel('Amplitude [dB]', color='b')
+plt.xlabel('Frequency [rad/sample]')
 plt.show()
 
 

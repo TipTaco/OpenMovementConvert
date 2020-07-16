@@ -238,9 +238,9 @@ class PrefForm():
 
     def changeToggleRes(self):
         '''Toggle on or off the resample option. This updates the trip buttons as well'''
-        self.resample = not self.resample
+        self.resample.set(not self.resample.get())
 
-        state = tk.NORMAL if self.resample else tk.DISABLED
+        state = tk.NORMAL if self.resample.get() else tk.DISABLED
         #self.resFreqInput.config(state=state)
         self.trimStartInput.config(state=state)
         self.trimEndInput.config(state=state)
@@ -280,9 +280,9 @@ class PrefForm():
         # 2 = Resample to original intented logger frequency + optional filtering
         # 3 = Decimate to rate less than original logger + forced <fs/2 filtering
         mode = self.resample_mode.get()
-        self.resample = False if mode == 1 else True
+        self.resample.set(False if mode == 1 else True)
 
-        state = tk.NORMAL if self.resample else tk.DISABLED
+        state = tk.NORMAL if self.resample.get() else tk.DISABLED
 
         self.set_frame_state(self.resample_frame2, state)
         self.set_frame_state(self.resample_frame2, state)
@@ -310,12 +310,12 @@ class PrefForm():
 
     def get_logger_rates(self):
         # Do a dummy run of the .cwa read and extract only the average logging frequency
-        (_, _, _, rate) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample, getFreq=True)
+        (_, _, _, rate) = ConvertMain.compute_multi_channel(self.filePaths, self.saveName, resample=self.resample.get(), getFreq=True)
         loggerDispFreq = "---"
 
         if float(rate['max']) - float(rate['min']) > 70.0:
             loggerDispFreq = "ERROR, Diff. Rates!"
-        elif not self.resample:
+        elif not self.resample.get():
             loggerDispFreq = "---"
         elif float(rate['average']) == 0.0:
             loggerDispFreq = "No loggers Selected!"
@@ -366,7 +366,7 @@ class PrefForm():
         # Dummy run the loading of the logger files. It will return the timestamp of the start and stop times as well
         # as the number of samples that will be generated in the output files.
         (startTime, endTime, numSamples, _) = ConvertMain.compute_multi_channel(
-            self.filePaths, self.saveName, resample=self.resample,
+            self.filePaths, self.saveName, resample=self.resample.get(),
             resample_freq=resample_freq, demoRun=True, trimStart=trimStart, trimEnd=trimEnd)
         # Special methods to fake the timezone display in the GUI. Later, this can be updated to accept the local
         #   timezone of the computer, but for now, Australian Western Standard Time is sufficient.
@@ -400,13 +400,13 @@ class PrefForm():
             trimStart = self.startT.get() * 60.0
             trimEnd = self.stopT.get() * 60.0
 
-            resample = self.resample
+            resample = self.resample.get()
             resample_freq = self.resample_freq.get()
 
-            lowpass = self.lowpass
+            lowpass = self.lowpass.get()
             lowpass_freq = self.lowpass_freq.get()
 
-            integrate = self.integrate
+            integrate = self.integrate.get()
             high1 = self.highpass1_freq.get()
             high2 = self.highpass2_freq.get()
         except tk.TclError as e:

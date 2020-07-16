@@ -152,7 +152,7 @@ def compute_multi_channel(listLoggerFiles, outputFile,
         comment += " Integrated with highpass @" + str(high1_freq) + " and " + str(high2_freq) + "."
 
     units = 'g' if not integrate else 'mm/s'
-    (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, byteWidth)
+    (header, channelHeaders) = BIN.generate_BIN(base, comment, channel_list, byteWidth, units=units)
 
     print("Saving output file to", dirname + "/")
 
