@@ -82,7 +82,8 @@ class PrefForm():
                                     "\n 3) (Optional) Choose to integrate with highpass filters"
                                     "\n 4) Select output file options" +
                                     "\n 5) Select output file name and location " +
-                                    "\n 6) Press convert")
+                                    "\n 6) Press convert" +
+                                    "\n 7) Click on console and press Enter key if nothing happens")
         self.instruction.pack(anchor=tk.W, pady=5, padx=5)
 
         # Input file selection
