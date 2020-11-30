@@ -77,7 +77,7 @@ def compute_multi_channel(listLoggerFiles, outputFile,
 
     # Perform checks and conditions to eliminate loggers who fall outside the appropriate range (Unused)
     if logger_out_of_range(10000, samples): print("[WARN]: Logger has samples out of range", samples)
-    if logger_out_of_range(20, rate): print("[WARN]: Logger has samlping freq. out of range", rate)
+    if logger_out_of_range(20, rate): print("[WARN]: Logger has sampling freq. out of range", rate)
     if logger_out_of_range(10000, startTime): print("[WARN]: Logger has start time out of range", startTime)
     if logger_out_of_range(10000, stopTime): print("[WARN]: Logger has end time out of range (>10000)", stopTime)
     if logger_out_of_range(1, stopTime): print("[WARN]: Logger has end time out of range (<1)", channels)
@@ -200,7 +200,7 @@ def compute_multi_channel(listLoggerFiles, outputFile,
             masterArray = rFilter.highpass_filter(masterArray, order=8, in_freq=input_freq, cutoff_freq=high2_freq)
 
         # Output the data for this logger to file and save the last position in file
-        output_samples = numSamples if not resample else rzSamples
+        output_samples = masterArray.shape[1] if not resample else rzSamples
         lastFilePos = rCWA.writeToFile(masterArray, filePath=outputPath, loggerInfo=logger, offsetBytes=lastFilePos,
                                        sizeBytes=byteWidth, samples=output_samples)
         if len(loggers) > 1: print("\n COMPLETED", (i+1), "OF", len(loggers), "FILES")

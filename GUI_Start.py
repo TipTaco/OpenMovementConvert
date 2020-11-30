@@ -15,7 +15,7 @@ import threading
 from multiprocessing import freeze_support
 
 PROCESS: str = 'CWA_to_BIN'
-VERSION: str = 'v1.2'
+VERSION: str = 'v1.2.1'
 
 class PrefForm():
     def __init__(self):
