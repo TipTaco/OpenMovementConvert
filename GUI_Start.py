@@ -84,17 +84,17 @@ class PrefForm():
                                     "\n 5) Select output file name and location " +
                                     "\n 6) Press convert" +
                                     "\n 7) Click on console and press Enter key if nothing happens")
-        self.instruction.pack(anchor=tk.W, pady=5, padx=5)
+        self.instruction.pack(anchor=tk.W, pady=0, padx=5)
 
         # Input file selection
         self.in_sep = ttk.Separator(self.in_file_frame)
-        self.in_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+        self.in_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=1)
         self.inLabel = tk.Label(self.in_file_frame, width = 10, justify=tk.LEFT, text="Input Files")
-        self.inLabel.pack(side=tk.LEFT, pady=5, padx=5)
+        self.inLabel.pack(side=tk.LEFT, pady=1, padx=5)
         self.inDisplay = tk.Entry(self.in_file_frame, state=tk.DISABLED, text="Select files...", borderwidth=2, width=50)
-        self.inDisplay.pack(side=tk.LEFT, pady=5, padx=5, fill=tk.X, expand=True)
-        self.inButton = tk.Button(self.in_file_frame, width = 16, text="Browse", command=self.inBrowse, height = 1, borderwidth=2)
-        self.inButton.pack(side=tk.LEFT, padx=5, pady=5)
+        self.inDisplay.pack(side=tk.LEFT, pady=1, padx=5, fill=tk.X, expand=True)
+        self.inButton = tk.Button(self.in_file_frame, width = 16, text="Browse", command=self.inBrowse, height=1, borderwidth=2)
+        self.inButton.pack(side=tk.LEFT, padx=2, pady=1)
 
         # Resample or Decimation Selector
         state = tk.NORMAL if self.resample.get() else tk.DISABLED
@@ -102,11 +102,11 @@ class PrefForm():
         self.frequencyText = tk.StringVar(value="---")
 
         self.resample_sep = ttk.Separator(self.resample_frame)
-        self.resample_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+        self.resample_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=1)
 
         self.resampleText = tk.Label(self.resample_frame, justify=tk.LEFT, fg='blue', text="Resampler / Downsampler: \n" +
                                                                     "  Resampling or downsampling requires filtering applied at FREQUENCY / 2 to avoid aliasing")
-        self.resampleText.pack(anchor=tk.NW, side = tk.TOP, pady=5, padx =5)
+        self.resampleText.pack(anchor=tk.NW, side = tk.TOP, pady=1, padx =5)
 
         # subframes fro resampling
         self.resample_frame1 = tk.Frame(self.resample_frame)
@@ -117,29 +117,29 @@ class PrefForm():
         resample_modes = [("Disabled", 1), ("Resample", 2), ("Decimate", 3)]
         for mode in resample_modes:
             tk.Radiobutton(self.resample_frame1, indicatoron=0, text=mode[0], width=20, command=self.change_resample_selection,
-                           padx=4, pady=4, variable=self.resample_mode, value=mode[1])\
-                .pack(anchor=tk.NW, padx=10, pady=4)
+                           padx=4, pady=1, variable=self.resample_mode, value=mode[1])\
+                .pack(anchor=tk.NW, padx=10, pady=1)
 
         self.resample_f_label = tk.Label(self.resample_frame2, text='Resample Frequency (Hz)', width=25, anchor='e')
-        self.resample_f_label.grid(row=0, column=0, pady=2)
+        self.resample_f_label.grid(row=0, column=0, pady=1)
         self.resample_f_select = tk.Entry(self.resample_frame2, borderwidth=2, width=10, textvariable=self.resample_freq, justify=tk.RIGHT)
         self.resample_f_select.grid(row=0, column=1, sticky='w')
 
         self.filter_enable = tk.Checkbutton(self.resample_frame2, text='Lowpass Filter (Hz)', justify=tk.RIGHT, variable=self.lowpass, width=22, anchor='e', command=self.update_resample_filter)
-        self.filter_enable.grid(row=1, column=0, pady=2)
+        self.filter_enable.grid(row=1, column=0, pady=1)
         self.filter_f_select = tk.Entry(self.resample_frame2, borderwidth=2, width=10, textvariable=self.lowpass_freq, justify=tk.RIGHT)
         self.filter_f_select.grid(row=1, column=1, sticky='w')
 
         # Trim selection options
         self.trimStartLabel = tk.Label(self.resample_frame2, text="Trim Start (decimal minutes)  ", width = 25, anchor='e', justify=tk.RIGHT)
-        self.trimStartLabel.grid(row=3, column=0, pady = 2)  # pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimStartLabel.grid(row=3, column=0, pady=1)  # pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
         self.trimStartInput = tk.Entry(self.resample_frame2, text="decimal minutes", width = 10, borderwidth=2, textvariable=self.startT, justify=tk.RIGHT)
         self.trimStartInput.insert(0, "0")
         self.trimStartInput.config(state=state)
         self.trimStartInput.grid(row=3, column=1, sticky='w')  # .pack(padx=5, pady=5, side=tk.LEFT)
 
         self.trimEndLabel = tk.Label(self.resample_frame2, text="Trim Finish (decimal minutes)", width = 25, anchor='e', justify=tk.RIGHT)
-        self.trimEndLabel.grid(row=4, column=0, pady = 2)  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimEndLabel.grid(row=4, column=0, pady=1)  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
         self.trimEndInput = tk.Entry(self.resample_frame2, text="decimal minutes", width = 10, borderwidth=2, textvariable=self.stopT, justify=tk.RIGHT)
         self.trimEndInput.insert(0, "0")
         self.trimEndInput.config(state=state)
@@ -147,7 +147,7 @@ class PrefForm():
 
         # show sample output for time
         self.trimButton = tk.Button(self.resample_frame2, text="Compute trim", width=20, height=3, state = state, command=self.testResampleRange)
-        self.trimButton.grid(row=5, column=0, sticky='nsew', padx=5, pady=5)  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
+        self.trimButton.grid(row=5, column=0, sticky='nsew', padx=5, pady=1)  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
         self.trimText = tk.Label(self.resample_frame2, text="Start Time:     N/A\nFinish Time:   N/A\nSamples:        N/A", width=30, anchor='w')
         self.trimText.grid(row=5, column=1, sticky='w')  # .pack(anchor=tk.NW, padx=5, pady=5, side=tk.LEFT)
 
@@ -157,23 +157,23 @@ class PrefForm():
 
         # Add Integration selector
         self.integrate_sep = ttk.Separator(self.integrate_frame)
-        self.integrate_sep.grid(row=0, column=0, columnspan=2, sticky='ew', pady=2)
+        self.integrate_sep.grid(row=0, column=0, columnspan=2, sticky='ew', pady=1)
         self.integrate_title = tk.Label(self.integrate_frame, fg='blue', justify=tk.LEFT, anchor='w',
                                         text='Integration:\n  Integrates the accelerometer data to velocity data in mm/s.\n' +
                                         '  A highpass filter is performed before and after integration to remove DC components.')
-        self.integrate_title.grid(row=1, column=0, columnspan=2, sticky='nw', pady=5, padx =5)
+        self.integrate_title.grid(row=1, column=0, columnspan=2, sticky='nw', pady=1, padx =5)
         self.integrate_label = tk.Label(self.integrate_frame, text="Integrate", width=50, anchor='e', justify=tk.RIGHT)
         self.integrate_label.grid(row=2, column=0)
         self.integrate_enable = tk.Checkbutton(self.integrate_frame, text="", width=27, anchor='w', justify=tk.LEFT, variable=self.integrate, command=self.update_integrate_check)
         self.integrate_enable.grid(row=2, column=1)
 
         self.high1_label = tk.Label(self.integrate_frame, text="Pre-integration Highpass Filter (Hz)", width=50, anchor='e')
-        self.high1_label.grid(row=3, column=0, pady=2)
+        self.high1_label.grid(row=3, column=0, pady=1)
         self.high1_entry = tk.Entry(self.integrate_frame, borderwidth=2, width=10, textvariable=self.highpass1_freq, justify=tk.RIGHT)
         self.high1_entry.grid(row=3, column=1, sticky='w')
 
         self.high2_label = tk.Label(self.integrate_frame, text="Post-integration Highpass Filter (Hz)", width=50, anchor='e')
-        self.high2_label.grid(row=4, column=0, pady=2)
+        self.high2_label.grid(row=4, column=0, pady=1)
         self.high2_entry = tk.Entry(self.integrate_frame, borderwidth=2, width=10, textvariable=self.highpass2_freq, justify=tk.RIGHT)
         self.high2_entry.grid(row=4, column=1, sticky='w')
 
@@ -181,7 +181,7 @@ class PrefForm():
 
         # Instead place the byte width selector here
         self.output_format_sep = ttk.Separator(self.out_format_frame)
-        self.output_format_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+        self.output_format_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=1)
         self.outputDesc = tk.Label(self.out_format_frame, text="Catman Output File (.BIN) format: \n" +
                                                  "  Recommended: \n" +
                                                  "    8 Byte Spacing (Full size)     1GB input = 4GB output\n" +
@@ -189,16 +189,16 @@ class PrefForm():
                                                  "  Not Recommended: \n" +
                                                  "    2 Byte Spacing (Quater Size)   1GB input = 1GB output (May take 20% longer to generate)",
                                    fg="blue", justify=tk.LEFT)
-        self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=5)
+        self.outputDesc.pack(side=tk.TOP, anchor=tk.NW, padx= 10, pady=1)
         # Dropdown to select the number of bytes to put in the output file
         self.bytesVar = tk.StringVar(self.root)
         self.bytesVar.set("8 Byte")
         self.byteDropDown = tk.OptionMenu(self.out_format_frame, self.bytesVar, "8 Byte", "4 Byte", "2 Byte", command=self.byteSelect)
-        self.byteDropDown.pack(side=tk.TOP, anchor=tk.N, padx= 10, pady=5)
+        self.byteDropDown.pack(side=tk.TOP, anchor=tk.N, padx= 10, pady=1)
 
         # Now get file output from user
         self.out_file_sep = ttk.Separator(self.out_file_frame)
-        self.out_file_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+        self.out_file_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=1)
         self.outLabel = tk.Label(self.out_file_frame, justify=tk.LEFT, width = 10, text="Output File")
         self.outLabel.pack(side=tk.LEFT, pady=5, padx=5)
         self.outDisplay = tk.Entry(self.out_file_frame, state=tk.DISABLED, text="Select file...", borderwidth=2)
@@ -208,11 +208,11 @@ class PrefForm():
 
         # Exit and conform buttons
         self.button_sep = ttk.Separator(self.button_frame)
-        self.button_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+        self.button_sep.pack(side=tk.TOP, fill=tk.X, expand=True, pady=1)
         self.button_exit = tk.Button(self.button_frame, text="Quit", command=self.quit, width=25)
         self.button_confirm = tk.Button(self.button_frame, text="Convert", command=self.confirm, width=25)
-        self.button_exit.pack(padx=5, pady=10, side=tk.LEFT, fill=tk.X, expand=True)
-        self.button_confirm.pack(padx=5, pady=10, side=tk.RIGHT, fill=tk.X, expand=True)
+        self.button_exit.pack(padx=5, pady=2, side=tk.LEFT, fill=tk.X, expand=True)
+        self.button_confirm.pack(padx=5, pady=2, side=tk.RIGHT, fill=tk.X, expand=True)
 
         #self.statusText = tk.Label(self.button_frame, text="Ready", justify=tk.LEFT)
         #self.statusText.pack(anchor=tk.NW, fill=tk.X, expand=True)
